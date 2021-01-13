@@ -104,7 +104,7 @@ def record_multiple_samples():
 def progress_bar_start():
     global progress_bar, duration
     progress_bar = ttk.Progressbar(window, orient=HORIZONTAL, length=200, mode='determinate')
-    progress_bar.place(relx=0.5, rely = 0.50, anchor=CENTER)
+    progress_bar.place(relx=0.5, rely = 0.65, anchor=CENTER)
     progress_increment(duration)
 
 def progress_increment(seconds):
