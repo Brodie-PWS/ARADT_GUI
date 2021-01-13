@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter import filedialog, messagebox, simpledialog, ttk
 from PIL import ImageTk, Image
 from record import *
+from predict import *
 import os
 import shutil
 from pathlib import Path
@@ -17,7 +18,7 @@ def load_samples():
     global samples
 
     # Prompt User to Specify files to load in
-    samples  = filedialog.askopenfilenames(parent=frame1, title='Select Audio Files')
+    samples  = filedialog.askopenfilenames(parent=frame1, initialdir='Samples/', title='Select Audio Files')
     if samples:
         print('Loaded in the following files: {}'.format(samples))
         messagebox.showinfo('Samples Loaded!', 'The Selected Samples have been loaded in, click \'Store Samples\' to load them into the GUI Program')
@@ -136,14 +137,21 @@ def make_prediction():
     missing_vars = False
 
     ## TODO - FIX Undefined Errors and ensure the handling works as expected
-    if not samples or loaded_model:
-        missing_vars = True
+    try:
+        if not samples or loaded_model:
+            missing_vars = True
+    except Exception as ex:
+        print('Ensure you have chosen a model and a Sample before clicking \'Make Prediction\'')
+        messagebox.showinfo('Error!', 'Make sure to choose a Model and Sample before clicking \'Make Prediction\'')
 
     if not missing_vars:
-        print('Ensure you have chosen a model and loaded a Sample before clicking \'Make Prediction\'')
+        print('Ensure you have chosen a model and a Sample before clicking \'Make Prediction\'')
+        messagebox.showinfo('Error!', 'Make sure to choose a Model and Sample before clicking \'Make Prediction\'')
     else:
         # TO DO
         print('Making Prediction on {}, using the model named {}'.format(samples[0], loaded_model[0]))
+        pre_process(samples[0])
+        load_saved_model(loaded_model[0])
 
 # Define the Window onject
 window = Tk()
@@ -249,7 +257,6 @@ f3_main_menu_button.place(relx=0.50, rely = 0.90, anchor=CENTER)
 
 frame3_title = Label(frame3, text='The VOID', bg='blue')
 frame3_title.pack(fill='x')
-
 
 show_frame(frame1)
 
