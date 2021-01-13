@@ -103,12 +103,16 @@ def record_multiple_samples():
 
 def progress_bar_start():
     global progress_bar, duration
-    progress_bar = ttk.Progressbar(window, orient=HORIZONTAL, length=200, mode='determinate')
+    progress_style = ttk.Style()
+    progress_style.theme_use('clam')
+    progress_style.configure('blue.Horizontal.TProgressbar', troughcolour='cyan', bordercolor='cyan', foreground='cyan', background='blue', lightcolor='blue', darkcolor='blue')
+    progress_bar = ttk.Progressbar(window, style='blue.Horizontal.TProgressbar', orient=HORIZONTAL, length=200, mode='determinate')
     progress_bar.place(relx=0.5, rely = 0.65, anchor=CENTER)
     progress_increment(duration)
 
 def progress_increment(seconds):
     global progress_bar
+    progress_finished = False
     # Determine the incremental value based on the amount of seconds the recording will be
     increment_amount = (100/seconds)
     print('Seconds: {}, Incrementing By: {}'.format(seconds, increment_amount))
@@ -122,9 +126,9 @@ def progress_increment(seconds):
                 print('Recording Finished')
                 messagebox.showinfo('Finished!', 'Recording has finished')
                 progress_bar['value'] = 0
+                progress_bar.destroy()
             window.update_idletasks()
             time.sleep(1)
-    progress_bar.destroy()
 
 def make_prediction():
     global samples
