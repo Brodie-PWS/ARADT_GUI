@@ -63,6 +63,24 @@ def store_samples():
         messagebox.showinfo('Samples not Stored!', 'There were no Audio Files to store. Click \'Load Samples\' to specify files')
         pass
 
+def delete_samples():
+    # Prompt User to Specify Samples to be deleted from GUI
+    del_samples  = filedialog.askopenfilenames(parent=frame1, initialdir='Samples/', title='Select Audio Files')
+    if del_samples:
+        print('Selected Following Files for Deletion: {}'.format(del_samples))
+        res = messagebox.askquestion('Are You Sure?', 'Are you sure you want to delete the selected samples?')
+        if res == 'yes':
+            for sample_path in del_samples:
+                os.remove(sample_path)
+                print('Removed {}'.format(sample_path))
+            print('All selected Samples have been deleted')
+            messagebox.showinfo('Samples deleted!', 'The selected Samples have been deleted')
+        else:
+            messagebox.showinfo('Samples not deleted!', 'The selected Samples were not deleted')
+    else:
+        print('No files were selected')
+        messagebox.showinfo('No files selected', 'No files were selected for deletion')
+
 def playback_samples():
     # Prompt User to Specify files to load in
     playback_samples  = filedialog.askopenfilenames(parent=frame1, initialdir='Samples/', title='Select Audio Files')
@@ -106,6 +124,7 @@ def progress_increment(seconds):
                 progress_bar['value'] = 0
             window.update_idletasks()
             time.sleep(1)
+    progress_bar.destroy()
 
 def make_prediction():
     global samples
@@ -175,26 +194,33 @@ f2_im_label = Label(frame2, image=photo)
 f2_im_label.place(x=0, y=0, relwidth=1, relheight=1)
 
 # Defining Buttons
+# When pressed will prompt the User to specify which Samples to load into the 'samples' list
 load_samples_button = Button(frame2, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='pink', text='Load in Sample/s', padx=10, pady=10, command = load_samples)
 load_samples_button.place(relx=0.50, rely=0.15, anchor=CENTER)
 
+# When pressed will Store the Samples in the 'samples' list into the GUI
 store_samples_button = Button(frame2, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='pink', text='Store Sample/s', padx=10, pady=10, command = store_samples)
 store_samples_button.place(relx=0.50, rely=0.30, anchor=CENTER)
 
-# Record Button when pressed will record 5 seconds of Audio and save it as a WAV file to root directory
-record_one_button = Button(frame2, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='pink', text='Record a Single Sample', padx=10, pady=10, command = record_sample) #lambda:record_audio(1))
-record_one_button.place(relx=0.50, rely = 0.45, anchor=CENTER)
+# When pressed will ask User to specify Samples for deletion
+delete_samples_button = Button(frame2, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='pink', text='Delete Samples', padx=10, pady=10, command = delete_samples)
+delete_samples_button.place(relx=0.50, rely = 0.45, anchor=CENTER)
 
 # Record Button when pressed will record 5 seconds of Audio and save it as a WAV file to root directory
+record_one_button = Button(frame2, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='pink', text='Record a Single Sample', padx=10, pady=10, command = record_sample) #lambda:record_audio(1))
+record_one_button.place(relx=0.50, rely = 0.60, anchor=CENTER)
+
+# When pressed will record multiple Samples back to back
 record_mult_button = Button(frame2, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='pink', text='Record Multiple Samples', padx=10, pady=10, command = record_multiple_samples)
-record_mult_button.place(relx=0.50, rely = 0.60, anchor=CENTER)
+record_mult_button.place(relx=0.50, rely = 0.75, anchor=CENTER)
 
 # When this Button is pressed, the User can specify a number of Audio files, which will then be played back to back sequentially
 playback_samples_button = Button(frame2, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='pink', text='Playback Sample/s', padx=10, pady=10, command = playback_samples)
-playback_samples_button.place(relx=0.50, rely = 0.75, anchor=CENTER)
+playback_samples_button.place(relx=0.50, rely = 0.90, anchor=CENTER)
 
+# When pressed will take User back to the main menu
 main_menu_button = Button(frame2, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='pink', text='Main Menu', padx=10, pady=10, command = lambda:show_frame(frame1))
-main_menu_button.place(relx=0.50, rely = 0.90, anchor=CENTER)
+main_menu_button.place(relx=0.20, rely = 0.50, anchor=CENTER)
 
 frame2_title = Label(frame2, text='Sample Management', bg='blue')
 frame2_title.pack(fill='x')
