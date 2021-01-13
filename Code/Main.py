@@ -40,22 +40,28 @@ def load_model():
 def store_samples():
     global samples
 
-    if samples:
-        new_paths_list = []
-        for sample in samples:
-            new_path = shutil.copy(sample, 'Samples/')
-            new_paths_list.append(new_path)
+    try:
+        if samples:
+            new_paths_list = []
+            for sample in samples:
+                new_path = shutil.copy(sample, 'Samples/')
+                new_paths_list.append(new_path)
 
-        if new_paths_list:
-            print('Selected Files have been stored in the Samples Directory')
-            print('New File Paths: {}'.format(new_paths_list))
-            messagebox.showinfo('Samples Stored!', 'The Selected Samples have been stored under /Samples Directory')
+            if new_paths_list:
+                print('Selected Files have been stored in the Samples Directory')
+                print('New File Paths: {}'.format(new_paths_list))
+                messagebox.showinfo('Samples Stored!', 'The Selected Samples have been stored under /Samples Directory')
 
-        # Clear Buffer of previously selected files
-        samples = []
-    else:
+            # Clear Buffer of previously selected files
+            samples = []
+        else:
+            print('There were no loaded samples to store')
+            messagebox.showinfo('Samples not Stored!', 'There were no Audio Files to store. Click \'Load Samples\' to specify files')
+    except Exception as ex:
+        print('Error: {}'.format(ex))
         print('There were no loaded samples to store')
         messagebox.showinfo('Samples not Stored!', 'There were no Audio Files to store. Click \'Load Samples\' to specify files')
+        pass
 
 def playback_samples():
     # Prompt User to Specify files to load in
@@ -70,14 +76,14 @@ def record_sample():
     # Call to external function in record.py.
     global duration
     duration = simpledialog.askinteger(title='Specify Duration', prompt='Specify the Duration of the Recording')
-    progress_bar()
+    progress_bar_start()
     record_audio(1, duration)
 
 def record_multiple_samples():
     amount = simpledialog.askinteger(title='Specify Amount', prompt='Specify Amount of Samples to Record')
     record_audio(amount)
 
-def progress_bar():
+def progress_bar_start():
     global progress_bar, duration
     progress_bar = ttk.Progressbar(window, orient=HORIZONTAL, length=200, mode='determinate')
     progress_bar.place(relx=0.5, rely = 0.50, anchor=CENTER)
@@ -106,7 +112,7 @@ def make_prediction():
 
     missing_vars = False
 
-    ## TODO - FIX Undefined Errors and ensure thid handling works as expected
+    ## TODO - FIX Undefined Errors and ensure the handling works as expected
     if not samples or loaded_model:
         missing_vars = True
 
