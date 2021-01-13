@@ -15,7 +15,7 @@ WAVE_OUTPUT_FILENAME = "Samples/Recorded_Sample_{}.wav"
 global filename_counter
 filename_counter = 0
 
-def record_audio(amount):
+def record_audio(amount, duration):
     if not amount:
         amount = 1
 
@@ -26,7 +26,7 @@ def record_audio(amount):
                         rate=RATE, input=True,
                         frames_per_buffer=CHUNK)
         frames = []
-        for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
+        for i in range(0, int(RATE / CHUNK * duration)):
             data = stream.read(CHUNK)
             frames.append(data)
 
@@ -45,28 +45,3 @@ def record_audio(amount):
         waveFile.setframerate(RATE)
         waveFile.writeframes(b''.join(frames))
         waveFile.close()
-
-# def play_audio(fname):
-#     wf = wave.open(fname, 'rb')
-#     p = pyaudio.PyAudio()
-#
-#     # Open stream (2)
-#     stream = p.open(format=p.get_format_from_width(wf.getsampwidth()),
-#                     channels=wf.getnchannels(),
-#                     rate=wf.getframerate(),
-#                     output=True)
-#
-#     # Read data
-#     data = wf.readframes(CHUNK)
-#
-#     # Play stream (3)
-#     while len(data) > 0:
-#         stream.write(data)
-#         data = wf.readframes(CHUNK)
-#
-#     # Stop stream (4)
-#     stream.stop_stream()
-#     stream.close()
-#
-#     # Close PyAudio (5)
-#     p.terminate()

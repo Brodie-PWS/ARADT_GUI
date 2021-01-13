@@ -66,9 +66,40 @@ def playback_samples():
         play_obj = wav_obj.play()
         play_obj.wait_done()
 
+def record_sample():
+    # Call to external function in record.py.
+    global duration
+    duration = simpledialog.askinteger(title='Specify Duration', prompt='Specify the Duration of the Recording')
+    progress_bar()
+    record_audio(1, duration)
+
 def record_multiple_samples():
     amount = simpledialog.askinteger(title='Specify Amount', prompt='Specify Amount of Samples to Record')
     record_audio(amount)
+
+def progress_bar():
+    global progress_bar, duration
+    progress_bar = ttk.Progressbar(window, orient=HORIZONTAL, length=200, mode='determinate')
+    progress_bar.place(relx=0.5, rely = 0.50, anchor=CENTER)
+    progress_increment(duration)
+
+def progress_increment(seconds):
+    global progress_bar
+    # Determine the incremental value based on the amount of seconds the recording will be
+    increment_amount = (100/seconds)
+    print('Seconds: {}, Incrementing By: {}'.format(seconds, increment_amount))
+
+    for x in range(seconds):
+            # Increment Progress Bar
+            progress_bar['value'] += increment_amount
+
+            # Once Progress reaches 100, display feedbback and reset progress bar
+            if progress_bar['value'] == 100:
+                print('Recording Finished')
+                messagebox.showinfo('Finished!', 'Recording has finished')
+                progress_bar['value'] = 0
+            window.update_idletasks()
+            time.sleep(1)
 
 def make_prediction():
     global samples
@@ -84,22 +115,6 @@ def make_prediction():
     else:
         # TO DO
         print('Making Prediction on {}, using the model named {}'.format(samples[0], loaded_model[0]))
-
-def progress_bar():
-    global progress_bar
-    progress_bar = ttk.Progressbar(window, orient=HORIZONTAL, length=200, mode='determinate')
-    progress_bar.place(relx=0.5, rely = 0.52, anchor=CENTER)
-    progress_increment(5)
-
-def progress_increment(seconds):
-    global progress_bar
-    increment_amount = (100/seconds)
-    print('Seconds: {}, Incrementing By: {}'.format(seconds, increment_amount))
-
-    for x in range(seconds):
-        progress_bar['value'] += increment_amount
-        window.update_idletasks()
-        time.sleep(1)
 
 # Define the Window onject
 window = Tk()
@@ -161,7 +176,7 @@ store_samples_button = Button(frame2, fg='white', background='blue', activebackg
 store_samples_button.place(relx=0.50, rely=0.30, anchor=CENTER)
 
 # Record Button when pressed will record 5 seconds of Audio and save it as a WAV file to root directory
-record_one_button = Button(frame2, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='pink', text='Record a Single Sample', padx=10, pady=10, command = progress_bar) #lambda:record_audio(1))
+record_one_button = Button(frame2, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='pink', text='Record a Single Sample', padx=10, pady=10, command = record_sample) #lambda:record_audio(1))
 record_one_button.place(relx=0.50, rely = 0.45, anchor=CENTER)
 
 # Record Button when pressed will record 5 seconds of Audio and save it as a WAV file to root directory
