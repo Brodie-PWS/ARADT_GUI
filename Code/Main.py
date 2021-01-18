@@ -132,26 +132,35 @@ def progress_increment(seconds):
             time.sleep(1)
 
 def make_prediction():
-    global samples
+    global loaded_model
+    # Ask User to specify a Sample or list of Samples
+    chosen_samples  = filedialog.askopenfilenames(parent=frame1, initialdir='Samples/', title='Select Audio Files')
+    pred_list = []
 
-    missing_vars = False
+    # If no samples were chosen, alert User and exit function
+    if len(chosen_samples) == 0:
+        print('Ensure you have specified Sample/s')
+        messagebox.showinfo('Error!', 'Ensure you have selected Samples')
+        return
 
-    ## TODO - FIX Undefined Errors and ensure the handling works as expected
+    # Ensure that the model has been loaded
     try:
-        if not samples or loaded_model:
-            missing_vars = True
+        if loaded_model:
+            if len(chosen_samples) > 1:
+                for sample in chosen_samples:
+                    pre_process(sample)
+                    prediction = load_saved_model(loaded_model[0])
+                    pred_list.append(prediction)
+                print(pred_list)
+                messagebox.showinfo('Prediction Results', 'Results: {}'.format(pred_list))
+            else:
+                pre_process(chosen_samples[0])
+                prediction = load_saved_model(loaded_model[0])
+                messagebox.showinfo('Prediction Result', 'Result: {}'.format(prediction))
     except Exception as ex:
-        print('Ensure you have chosen a model and a Sample before clicking \'Make Prediction\'')
-        messagebox.showinfo('Error!', 'Make sure to choose a Model and Sample before clicking \'Make Prediction\'')
-
-    if not missing_vars:
-        print('Ensure you have chosen a model and a Sample before clicking \'Make Prediction\'')
-        messagebox.showinfo('Error!', 'Make sure to choose a Model and Sample before clicking \'Make Prediction\'')
-    else:
-        # TO DO
-        print('Making Prediction on {}, using the model named {}'.format(samples[0], loaded_model[0]))
-        pre_process(samples[0])
-        load_saved_model(loaded_model[0])
+        print('Ensure you have chosen a model before clicking \'Make Prediction\'')
+        messagebox.showinfo('Error!', 'Make sure to choose a Model before clicking \'Make Prediction\'')
+        return
 
 # Define the Window onject
 window = Tk()
@@ -246,11 +255,8 @@ f3_im_label.place(x=0, y=0, relwidth=1, relheight=1)
 load_model_button = Button(frame3, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='blue', text='Choose a Model/s', padx=10, pady=10, command = load_model)
 load_model_button.place(relx=0.5, rely=0.45, anchor=CENTER)
 
-f3_load_samples_button = Button(frame3, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='blue', text='Load a Sample/s', padx=10, pady=10, command = load_samples)
-f3_load_samples_button.place(relx=0.50, rely = 0.55, anchor=CENTER)
-
 make_prediction_button = Button(frame3, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='blue', text='Make Prediction', padx=10, pady=10, command = make_prediction)
-make_prediction_button.place(relx=0.50, rely = 0.75, anchor=CENTER)
+make_prediction_button.place(relx=0.50, rely = 0.55, anchor=CENTER)
 
 f3_main_menu_button = Button(frame3, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='pink', text='Main Menu', padx=10, pady=10, command = lambda:show_frame(frame1))
 f3_main_menu_button.place(relx=0.50, rely = 0.90, anchor=CENTER)
