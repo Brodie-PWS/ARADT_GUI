@@ -91,10 +91,8 @@ def load_saved_model(model_fpath):
     # Ask Model to make prediction on the extracted Features of the Sample
     pred = pipe.predict(reshaped_FV_Void)
 
-    # Convert to a list
-    prediction = pred.tolist()
-
     # Reformat Prediction
+    prediction = pred.tolist()
     if prediction[0] == 1:
         prediction = '1: Genuine Voice'
     else:

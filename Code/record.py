@@ -9,7 +9,6 @@ FORMAT = pyaudio.paInt16
 CHANNELS = 2
 RATE = 44100
 CHUNK = 1024
-RECORD_SECONDS = 5
 WAVE_OUTPUT_FILENAME = "Samples/Recorded_Sample_{}.wav"
 
 global filename_counter
