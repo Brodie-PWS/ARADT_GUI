@@ -96,8 +96,8 @@ def load_saved_model(model_fpath):
 
     # Reformat Prediction
     if prediction[0] == 1:
-        prediction = '1: Geniune Voice'
+        prediction = '1: Genuine Voice'
     else:
-        prediction = '0: Non Geniune Voice'
+        prediction = '0: Non Genuine Voice'
 
     return prediction

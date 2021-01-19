@@ -3,11 +3,13 @@ from tkinter import filedialog, messagebox, simpledialog, ttk
 from PIL import ImageTk, Image
 from record import *
 from predict import *
+from pathlib import Path
+from threading import Timer
 import os
 import shutil
-from pathlib import Path
 import simpleaudio as sa
-from threading import Timer
+import matplotlib.pyplot as plt
+import numpy as np
 
 global samples, loaded_model
 
@@ -30,7 +32,7 @@ def load_model():
     global loaded_model
 
     # Prompt User to Specify files to load in
-    loaded_model  = filedialog.askopenfilenames(parent=frame3, initialdir='Models/', title='Select A Model To Use For Predictions')
+    loaded_model  = filedialog.askopenfilename(parent=frame3, initialdir='Models/', title='Select A Model To Use For Predictions')
     if loaded_model:
         print('Loaded the following model: {}'.format(loaded_model))
         messagebox.showinfo('Model Loaded!', 'The Selected Model has been loaded in, you can now ask VOID to make a prediction')
@@ -132,35 +134,72 @@ def progress_increment(seconds):
             time.sleep(1)
 
 def make_prediction():
-    global loaded_model
-    # Ask User to specify a Sample or list of Samples
-    chosen_samples  = filedialog.askopenfilenames(parent=frame1, initialdir='Samples/', title='Select Audio Files')
     pred_list = []
 
+    # Ask User to choose a Model
+    chosen_model = filedialog.askopenfilenames(parent=frame1, initialdir='Models/', title='Specify a Model to use')
+    # If no Model was chosen, alert User and exit function
+    if len(chosen_model) == 0:
+        print('Ensure you have chosen a model before clicking \'Make Prediction\'')
+        messagebox.showinfo('Error!', 'Make sure to choose a Model before clicking \'Make Prediction\'')
+        return
+
+    # Ask User to specify a Sample or list of Samples
+    chosen_samples  = filedialog.askopenfilenames(parent=frame1, initialdir='Samples/', title='Select Audio Files')
     # If no samples were chosen, alert User and exit function
     if len(chosen_samples) == 0:
         print('Ensure you have specified Sample/s')
         messagebox.showinfo('Error!', 'Ensure you have selected Samples')
         return
 
-    # Ensure that the model has been loaded
-    try:
-        if loaded_model:
-            if len(chosen_samples) > 1:
-                for sample in chosen_samples:
-                    pre_process(sample)
-                    prediction = load_saved_model(loaded_model[0])
-                    pred_list.append(prediction)
-                print(pred_list)
-                messagebox.showinfo('Prediction Results', 'Results: {}'.format(pred_list))
-            else:
-                pre_process(chosen_samples[0])
-                prediction = load_saved_model(loaded_model[0])
-                messagebox.showinfo('Prediction Result', 'Result: {}'.format(prediction))
-    except Exception as ex:
-        print('Ensure you have chosen a model before clicking \'Make Prediction\'')
-        messagebox.showinfo('Error!', 'Make sure to choose a Model before clicking \'Make Prediction\'')
-        return
+    # If more than one sample was selected, get predictions iteratively.
+    if len(chosen_samples) > 1:
+        for sample in chosen_samples:
+            pre_process(sample)
+            prediction = load_saved_model(chosen_model[0])
+            pred_list.append(prediction)
+        print(pred_list)
+        messagebox.showinfo('Prediction Results', 'Results: {}'.format(pred_list))
+    else:
+        pre_process(chosen_samples[0])
+        prediction = load_saved_model(chosen_model[0])
+        messagebox.showinfo('Prediction Result', 'Result: {}'.format(prediction))
+
+def analyse_samples():
+    # TODO - Fix bug where only the first Figure displays
+    index = 0
+    chosen_samples  = filedialog.askopenfilenames(parent=frame1, initialdir='Samples/', title='Select Audio Files')
+    for sample in chosen_samples:
+        plot_graphs(index, sample)
+        index += 1
+
+def plot_graphs(index, sample_fname):
+    sample_wav = wave.open(sample_fname, 'r')
+    sample_freq = 16000
+    data = np.frombuffer(sample_wav.readframes(sample_freq), dtype=np.int16)
+    sig = sample_wav.readframes(-1)
+    sig = np.frombuffer(sig, 'Int16')
+
+    # Determine Filename
+    filename = os.path.basename(sample_fname)
+    plt.figure(index)
+    plt.suptitle('Analysis of {}'.format(filename))
+
+    # Generate Spectrogram of Signal
+    c = plt.subplot(311)
+    Pxx, freqs, bins, im = c.specgram(sig, NFFT=1024, Fs=16000, noverlap=900)
+    c.set_xlabel('Time')
+    c.set_ylabel('Frequency')
+    # Generate PSD (Power Spectral Density) plot of Signal
+    p = plt.subplot(312)
+    plt.psd(sig, color='blue')
+    # Generate Magnitude Spectrum plot of Signal
+    ms = plt.subplot(313)
+    plt.magnitude_spectrum(sig, color='blue')
+
+    # Adjust spacing between Plots
+    plt.subplots_adjust(hspace=0.5)
+    plt.show()
 
 # Define the Window onject
 window = Tk()
@@ -252,10 +291,10 @@ f3_im_label = Label(frame3, image=photo)
 f3_im_label.place(x=0, y=0, relwidth=1, relheight=1)
 
 # Defining Buttons
-load_model_button = Button(frame3, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='blue', text='Choose a Model/s', padx=10, pady=10, command = load_model)
-load_model_button.place(relx=0.5, rely=0.45, anchor=CENTER)
+analyse_samples_button = Button(frame3, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='blue', text='Analyse Sample/s', padx=10, pady=10, command = analyse_samples)
+analyse_samples_button.place(relx=0.5, rely=0.45, anchor=CENTER)
 
-make_prediction_button = Button(frame3, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='blue', text='Make Prediction', padx=10, pady=10, command = make_prediction)
+make_prediction_button = Button(frame3, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='blue', text='Make A Prediction', padx=10, pady=10, command = make_prediction)
 make_prediction_button.place(relx=0.50, rely = 0.55, anchor=CENTER)
 
 f3_main_menu_button = Button(frame3, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='pink', text='Main Menu', padx=10, pady=10, command = lambda:show_frame(frame1))
