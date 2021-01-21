@@ -98,11 +98,16 @@ def record_sample():
     global duration
     duration = simpledialog.askinteger(title='Specify Duration', prompt='Specify the Duration of the Recording')
     progress_bar_start()
-    record_audio(1, duration)
+    record_audio(duration)
 
 def record_multiple_samples():
+    ### TODO - Fix the Progress Bar functionality for multiple samples
+    global duration
     amount = simpledialog.askinteger(title='Specify Amount', prompt='Specify Amount of Samples to Record')
-    record_audio(amount)
+    duration = simpledialog.askinteger(title='Specify Duration', prompt='Specify the Duration of each Recording')
+    for x in range(amount):
+        progress_bar_start()
+        record_audio(duration)
 
 def progress_bar_start():
     global progress_bar, duration
