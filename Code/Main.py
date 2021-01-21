@@ -166,12 +166,16 @@ def make_prediction():
         messagebox.showinfo('Prediction Result', 'Result: {}'.format(prediction))
 
 def analyse_samples():
-    # TODO - Fix bug where only the first Figure displays
     index = 0
+    # Prompt User to select Samples for analysis
     chosen_samples  = filedialog.askopenfilenames(parent=frame1, initialdir='Samples/', title='Select Audio Files')
+    # Iterate through selected samples and create a figure for each one
     for sample in chosen_samples:
         plot_graphs(index, sample)
         index += 1
+
+    # Display all of the created figures
+    plt.show()
 
 def plot_graphs(index, sample_fname):
     sample_wav = wave.open(sample_fname, 'r')
@@ -199,7 +203,6 @@ def plot_graphs(index, sample_fname):
 
     # Adjust spacing between Plots
     plt.subplots_adjust(hspace=0.5)
-    plt.show()
 
 # Define the Window onject
 window = Tk()
