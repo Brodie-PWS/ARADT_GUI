@@ -98,7 +98,7 @@ def record_sample():
     global duration
     duration = simpledialog.askinteger(title='Specify Duration', prompt='Specify the Duration of the Recording')
     if not duration: return
-    progress_bar_start()
+    progress_bar_start('single')
     record_audio(duration)
 
 def record_multiple_samples():
@@ -110,17 +110,21 @@ def record_multiple_samples():
     if not duration: return
 
     for x in range(amount):
-        progress_bar_start()
+        progress_bar_start('multiple')
         record_audio(duration)
 
-def progress_bar_start():
+def progress_bar_start(setting):
     global progress_bar, duration
     # Progress Bar Setup
     progress_style = ttk.Style()
     progress_style.theme_use('clam')
     progress_style.configure('blue.Horizontal.TProgressbar', troughcolour='cyan', bordercolor='cyan', foreground='cyan', background='blue', lightcolor='blue', darkcolor='blue')
     progress_bar = ttk.Progressbar(window, style='blue.Horizontal.TProgressbar', orient=HORIZONTAL, length=200, mode='determinate')
-    progress_bar.place(relx=0.5, rely = 0.68, anchor=CENTER)
+    # Position Progress Bar based on which button was pressed
+    if setting == 'single':
+        progress_bar.place(relx=0.5, rely = 0.65, anchor=CENTER)
+    elif setting == 'multiple':
+        progress_bar.place(relx=0.5, rely = 0.70, anchor=CENTER)
 
     progress_finished = False
     for x in range(duration):
@@ -128,9 +132,9 @@ def progress_bar_start():
         window.after(1000, progress_increment(duration))
         # Once Progress reaches 100, display feedbback and reset progress bar
         if progress_bar['value'] == 100:
-            print('Progress Bar Finished')
-            messagebox.showinfo('Finished!', 'Recording has finished, Now Saving...')
-            progress_bar['value'] = 0
+            print('Progress Bar Reset')
+            messagebox.showinfo('Recording Finished!', 'Recording has finished, Now Saving, Please Wait...')
+            progress_bar.destroy()
 
         window.update_idletasks()
 
