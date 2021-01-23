@@ -82,7 +82,7 @@ def pre_process(sample_fpath):
     global FV_Void
     FV_Void = np.concatenate((FV_LDF, FV_HPF, FV_LPC, FV_LFP))
 
-def load_saved_model(model_fpath):
+def predict_sample(model_fpath):
     global FV_Void
     # Reshape the Feature Vector
     reshaped_FV_Void = FV_Void.reshape(1, -1)

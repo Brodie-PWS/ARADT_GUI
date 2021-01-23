@@ -4,7 +4,7 @@ from PIL import ImageTk, Image
 from record import *
 from predict import *
 from pathlib import Path
-from threading import Timer
+import threading
 import os
 import shutil
 import simpleaudio as sa
@@ -94,49 +94,51 @@ def playback_samples():
         play_obj.wait_done()
 
 def record_sample():
-    # Call to external function in record.py.
+    # Calls to external function in record.py.
     global duration
     duration = simpledialog.askinteger(title='Specify Duration', prompt='Specify the Duration of the Recording')
+    if not duration: return
     progress_bar_start()
     record_audio(duration)
 
 def record_multiple_samples():
-    ### TODO - Fix the Progress Bar functionality for multiple samples
+    # Calls to external function in record.py.
     global duration
     amount = simpledialog.askinteger(title='Specify Amount', prompt='Specify Amount of Samples to Record')
+    if not amount: return
     duration = simpledialog.askinteger(title='Specify Duration', prompt='Specify the Duration of each Recording')
+    if not duration: return
+
     for x in range(amount):
         progress_bar_start()
         record_audio(duration)
 
 def progress_bar_start():
     global progress_bar, duration
+    # Progress Bar Setup
     progress_style = ttk.Style()
     progress_style.theme_use('clam')
     progress_style.configure('blue.Horizontal.TProgressbar', troughcolour='cyan', bordercolor='cyan', foreground='cyan', background='blue', lightcolor='blue', darkcolor='blue')
     progress_bar = ttk.Progressbar(window, style='blue.Horizontal.TProgressbar', orient=HORIZONTAL, length=200, mode='determinate')
-    progress_bar.place(relx=0.5, rely = 0.65, anchor=CENTER)
-    progress_increment(duration)
+    progress_bar.place(relx=0.5, rely = 0.68, anchor=CENTER)
 
-def progress_increment(seconds):
-    global progress_bar
     progress_finished = False
-    # Determine the incremental value based on the amount of seconds the recording will be
-    increment_amount = (100/seconds)
-    print('Seconds: {}, Incrementing By: {}'.format(seconds, increment_amount))
+    for x in range(duration):
+        # Increment Progress Bar
+        window.after(1000, progress_increment(duration))
+        # Once Progress reaches 100, display feedbback and reset progress bar
+        if progress_bar['value'] == 100:
+            print('Progress Bar Finished')
+            messagebox.showinfo('Finished!', 'Recording has finished, Now Saving...')
+            progress_bar['value'] = 0
 
-    for x in range(seconds):
-            # Increment Progress Bar
-            progress_bar['value'] += increment_amount
+        window.update_idletasks()
 
-            # Once Progress reaches 100, display feedbback and reset progress bar
-            if progress_bar['value'] == 100:
-                print('Recording Finished')
-                messagebox.showinfo('Finished!', 'Recording has finished')
-                progress_bar['value'] = 0
-                progress_bar.destroy()
-            window.update_idletasks()
-            time.sleep(1)
+def progress_increment(duration):
+    global progress_bar
+    # Determine the increment value based on duration of sample
+    increment_amount = (100/duration)
+    progress_bar['value'] += increment_amount
 
 def make_prediction():
     pred_list = []
@@ -161,13 +163,13 @@ def make_prediction():
     if len(chosen_samples) > 1:
         for sample in chosen_samples:
             pre_process(sample)
-            prediction = load_saved_model(chosen_model[0])
+            prediction = predict_sample(chosen_model[0])
             pred_list.append(prediction)
         print(pred_list)
         messagebox.showinfo('Prediction Results', 'Results: {}'.format(pred_list))
     else:
         pre_process(chosen_samples[0])
-        prediction = load_saved_model(chosen_model[0])
+        prediction = predict_sample(chosen_model[0])
         messagebox.showinfo('Prediction Result', 'Result: {}'.format(prediction))
 
 def analyse_samples():

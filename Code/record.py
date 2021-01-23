@@ -3,7 +3,7 @@ import wave
 import sys
 import os
 import time
-import tkinter as tk
+from tkinter import messagebox
 
 FORMAT = pyaudio.paInt16
 CHANNELS = 2
@@ -40,3 +40,6 @@ def record_audio(duration):
     waveFile.setframerate(RATE)
     waveFile.writeframes(b''.join(frames))
     waveFile.close()
+
+    print(f'Recording Saved To {UNIQUE_OUTPUT_FILENAME}')
+    messagebox.showinfo('Saved!', 'Recording Saved!')
