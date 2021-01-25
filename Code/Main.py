@@ -163,18 +163,9 @@ def make_prediction():
         messagebox.showinfo('Error!', 'Ensure you have selected Samples')
         return
 
-    # If more than one sample was selected, get predictions iteratively.
-    if len(chosen_samples) > 1:
-        for sample in chosen_samples:
-            pre_process(sample)
-            prediction = predict_sample(chosen_model[0])
-            pred_list.append(prediction)
-        print(pred_list)
-        messagebox.showinfo('Prediction Results', 'Results: {}'.format(pred_list))
-    else:
-        pre_process(chosen_samples[0])
-        prediction = predict_sample(chosen_model[0])
-        messagebox.showinfo('Prediction Result', 'Result: {}'.format(prediction))
+    predictions = predict_pipeline(chosen_model[0], chosen_samples)
+    print(predictions)
+    messagebox.showinfo('Prediction Results', f'{predictions}')
 
 def analyse_samples():
     index = 0
