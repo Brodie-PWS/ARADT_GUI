@@ -163,9 +163,16 @@ def make_prediction():
         messagebox.showinfo('Error!', 'Ensure you have selected Samples')
         return
 
+    global predictions
     predictions = predict_pipeline(chosen_model[0], chosen_samples)
     print(predictions)
     messagebox.showinfo('Prediction Results', f'{predictions}')
+
+def show_last_predictions():
+    if 'predictions' in globals():
+        messagebox.showinfo('Prediction Results', f'{predictions}')
+    else:
+        messagebox.showinfo('No Results', 'There were no results to retrieve :(')
 
 def analyse_samples():
     index = 0
@@ -301,6 +308,9 @@ analyse_samples_button.place(relx=0.5, rely=0.45, anchor=CENTER)
 
 make_prediction_button = Button(frame3, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='blue', text='Make A Prediction', padx=10, pady=10, command = make_prediction)
 make_prediction_button.place(relx=0.50, rely = 0.55, anchor=CENTER)
+
+show_last_predictions_button = Button(frame3, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='blue', text='Show Last Prediction/s', padx=10, pady=10, command = show_last_predictions)
+show_last_predictions_button.place(relx=0.50, rely = 0.75, anchor=CENTER)
 
 f3_main_menu_button = Button(frame3, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='pink', text='Main Menu', padx=10, pady=10, command = lambda:show_frame(frame1))
 f3_main_menu_button.place(relx=0.50, rely = 0.90, anchor=CENTER)
