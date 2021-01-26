@@ -323,17 +323,17 @@ f1_im_label = Label(frame1, image=photo)
 f1_im_label.place(x=0, y=0, relwidth=1, relheight=1)
 
 # Defining Buttons
-sample_button = Button(frame1, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='blue', text='Sample Management', padx=10, pady=10, command = lambda:show_frame(frame2))
+sample_button = Button(frame1, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Sample Management', padx=10, pady=10, command = lambda:show_frame(frame2))
 sample_button.place(relx=0.50, rely = 0.45, anchor=CENTER)
 
-prediction_button = Button(frame1, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='blue', text='ENTER THE VOID', padx=10, pady=10, command = lambda:show_frame(frame3))
+prediction_button = Button(frame1, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='ENTER THE VOID', padx=10, pady=10, command = lambda:show_frame(frame3))
 prediction_button.place(relx=0.50, rely = 0.60, anchor=CENTER)
 
 # Exit Button
-exit_button = Button(frame1, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='blue', text='Exit the App', padx=10, pady=10, command = window.destroy)
+exit_button = Button(frame1, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Exit the App', padx=10, pady=10, command = window.destroy)
 exit_button.place(relx=0.5, rely=0.9, anchor=CENTER)
 
-frame1_title = Label(frame1, text='VOID GUI: Main Menu', bg='blue')
+frame1_title = Label(frame1, text='VOID GUI: Main Menu', bg='#44DDFF')
 frame1_title.pack(fill='x')
 
 # ---------------------------- FRAME 2 CODE-----------------------------------
@@ -344,34 +344,34 @@ f2_im_label.place(x=0, y=0, relwidth=1, relheight=1)
 
 # Defining Buttons
 # When pressed will prompt the User to specify which Samples to load into the 'samples' list
-load_samples_button = Button(frame2, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='pink', text='Load in Sample/s', padx=10, pady=10, command = load_samples)
+load_samples_button = Button(frame2, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Load in Sample/s', padx=10, pady=10, command = load_samples)
 load_samples_button.place(relx=0.50, rely=0.15, anchor=CENTER)
 
 # When pressed will Store the Samples in the 'samples' list into the GUI
-store_samples_button = Button(frame2, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='pink', text='Store Sample/s', padx=10, pady=10, command = store_samples)
+store_samples_button = Button(frame2, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Store Sample/s', padx=10, pady=10, command = store_samples)
 store_samples_button.place(relx=0.50, rely=0.30, anchor=CENTER)
 
 # When pressed will ask User to specify Samples for deletion
-delete_samples_button = Button(frame2, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='pink', text='Delete Samples', padx=10, pady=10, command = delete_samples)
+delete_samples_button = Button(frame2, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Delete Samples', padx=10, pady=10, command = delete_samples)
 delete_samples_button.place(relx=0.50, rely = 0.45, anchor=CENTER)
 
 # Record Button when pressed will record 5 seconds of Audio and save it as a WAV file to root directory
-record_one_button = Button(frame2, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='pink', text='Record a Single Sample', padx=10, pady=10, command = record_sample) #lambda:record_audio(1))
+record_one_button = Button(frame2, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Record a Single Sample', padx=10, pady=10, command = record_sample) #lambda:record_audio(1))
 record_one_button.place(relx=0.50, rely = 0.60, anchor=CENTER)
 
 # When pressed will record multiple Samples back to back
-record_mult_button = Button(frame2, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='pink', text='Record Multiple Samples', padx=10, pady=10, command = record_multiple_samples)
+record_mult_button = Button(frame2, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Record Multiple Samples', padx=10, pady=10, command = record_multiple_samples)
 record_mult_button.place(relx=0.50, rely = 0.75, anchor=CENTER)
 
 # When this Button is pressed, the User can specify a number of Audio files, which will then be played back to back sequentially
-playback_samples_button = Button(frame2, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='pink', text='Playback Sample/s', padx=10, pady=10, command = playback_samples)
+playback_samples_button = Button(frame2, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Playback Sample/s', padx=10, pady=10, command = playback_samples)
 playback_samples_button.place(relx=0.50, rely = 0.90, anchor=CENTER)
 
 # When pressed will take User back to the main menu
-main_menu_button = Button(frame2, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='pink', text='Main Menu', padx=10, pady=10, command = lambda:show_frame(frame1))
+main_menu_button = Button(frame2, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Main Menu', padx=10, pady=10, command = lambda:show_frame(frame1))
 main_menu_button.place(relx=0.20, rely = 0.50, anchor=CENTER)
 
-frame2_title = Label(frame2, text='Sample Management', bg='blue')
+frame2_title = Label(frame2, text='Sample Management', bg='#44DDFF')
 frame2_title.pack(fill='x')
 
 # ---------------------------- FRAME 3 CODE-----------------------------------
@@ -380,22 +380,22 @@ f3_im_label = Label(frame3, image=photo)
 f3_im_label.place(x=0, y=0, relwidth=1, relheight=1)
 
 # Defining Buttons
-analyse_samples_button = Button(frame3, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='blue', text='Analyse Sample/s', padx=10, pady=10, command = analyse_samples)
+analyse_samples_button = Button(frame3, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Analyse Sample/s', padx=10, pady=10, command = analyse_samples)
 analyse_samples_button.place(relx=0.5, rely=0.45, anchor=CENTER)
 
-make_prediction_button = Button(frame3, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='blue', text='Make A Prediction', padx=10, pady=10, command = make_prediction)
+make_prediction_button = Button(frame3, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Make A Prediction', padx=10, pady=10, command = make_prediction)
 make_prediction_button.place(relx=0.50, rely = 0.55, anchor=CENTER)
 
-show_last_predictions_button = Button(frame3, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='blue', text='Show Last Prediction/s', padx=10, pady=10, command = show_last_predictions)
+show_last_predictions_button = Button(frame3, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Show Last Prediction/s', padx=10, pady=10, command = show_last_predictions)
 show_last_predictions_button.place(relx=0.60, rely = 0.75, anchor=CENTER)
 
-verify_predictions_button = Button(frame3, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='blue', text='Verify Last Prediction/s', padx=10, pady=10, command = verify_predictions)
+verify_predictions_button = Button(frame3, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Verify Last Prediction/s', padx=10, pady=10, command = verify_predictions)
 verify_predictions_button.place(relx=0.40, rely = 0.75, anchor=CENTER)
 
-f3_main_menu_button = Button(frame3, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='pink', text='Main Menu', padx=10, pady=10, command = lambda:show_frame(frame1))
+f3_main_menu_button = Button(frame3, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Main Menu', padx=10, pady=10, command = lambda:show_frame(frame1))
 f3_main_menu_button.place(relx=0.50, rely = 0.90, anchor=CENTER)
 
-frame3_title = Label(frame3, text='The VOID', bg='blue')
+frame3_title = Label(frame3, text='The VOID', bg='#44DDFF')
 frame3_title.pack(fill='x')
 
 show_frame(frame1)
