@@ -14,10 +14,11 @@ import re
 
 global samples, loaded_model
 
-dataset_dict = {'Evaluation': 'Labels/ASVspoof2017_V2_eval.trl.txt',
-                'Developement': 'Labels/ASVspoof2017_V2_eval.trl.txt',
-                'Training': 'Labels/ASVspoof2017_V2_eval.trl.txt'
-                }
+dataset_dict = {
+    'Evaluation': 'Labels/ASVspoof2017_V2_eval.trl.txt',
+    'Development': 'Labels/ASVspoof2017_V2_eval.trl.txt',
+    'Training': 'Labels/ASVspoof2017_V2_eval.trl.txt'
+    }
 
 def show_frame(frame):
     frame.tkraise()
@@ -201,7 +202,10 @@ def verify_predictions():
             elif sample_name.startswith('T_'):
                 dataset_path = dataset_dict.get('Training')
             elif sample_name.startswith('D_'):
-                dataset_path = dataset_dict.get('Developement')
+                dataset_path = dataset_dict.get('Development')
+            else:
+                print(f'No Label could be found for Sample: {sample_name}. Continuing...')
+                continue
             print(f'Dataset Path = {dataset_path}\n')
 
             if dataset_path:
@@ -230,8 +234,12 @@ def verify_predictions():
                 else:
                     FP += 1
 
-        ACCURACY = (TP + TN) / (TP + TN + FP + FN)
-        FAR = FP / (FP + TN)
+        try:
+            ACCURACY = (TP + TN) / (TP + TN + FP + FN)
+            FAR = FP / (FP + TN)
+        except Exception as ex:
+            messagebox.showinfo('Error', 'No labels could be found for selected Sample/s. Therefore the Predictions could not be verified')
+            return
         messagebox.showinfo('Results', f'\nOverall Accuracy: {ACCURACY}\nFAR:{FAR}\n\nTP:{TP}\nTN:{TN}\nFP:{FP}\nFN:{FN}')
     else:
         messagebox.showinfo('No Results', 'There were no previous predictions to verify')
