@@ -4,6 +4,7 @@ from PIL import ImageTk, Image
 from record import *
 from predict import *
 from pathlib import Path
+from pprint import pprint
 import threading
 import os
 import shutil
@@ -172,12 +173,19 @@ def make_prediction():
 
     global predictions
     predictions = predict_pipeline(chosen_model[0], chosen_samples)
-    print(predictions)
-    messagebox.showinfo('Prediction Results', f'{predictions}')
+    formatted_predictions = reformat_predictions(predictions)
+    messagebox.showinfo('Prediction Results', f'{formatted_predictions}')
+
+def reformat_predictions(predictions):
+    formatted_predictions = '          ----- PREDICTIONS -----'
+    for prediction in predictions:
+        formatted_predictions += '\n' + prediction
+    return formatted_predictions
 
 def show_last_predictions():
     if 'predictions' in globals():
-        messagebox.showinfo('Prediction Results', f'{predictions}')
+        formatted_predictions = reformat_predictions(predictions)
+        messagebox.showinfo('Prediction Results', f'{formatted_predictions}')
     else:
         messagebox.showinfo('No Results', 'There were no results to retrieve :(')
 
@@ -221,7 +229,7 @@ def verify_predictions():
                         print(f'Found Match in line: \n{line}')
 
             print(f'What the Sample was Predicted to be: {sample_predicted_label}')
-            print(f'What the Sample actually is: {actual_label}')
+            print(f'What the Sample actually is: {actual_label}\n')
             # Determine TP, TN, FP, FN values
             if actual_label == 'Genuine':
                 if actual_label == sample_predicted_label:
