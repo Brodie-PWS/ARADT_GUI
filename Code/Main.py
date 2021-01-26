@@ -4,7 +4,6 @@ from PIL import ImageTk, Image
 from record import *
 from predict import *
 from pathlib import Path
-from pprint import pprint
 import threading
 import os
 import shutil
@@ -204,7 +203,7 @@ def verify_predictions():
             sample_name = sample_format[0]
             sample_predicted_label = sample_format[1]
 
-            # Based on the starting letter, determine which
+            # Based on the starting letter, determine which Dataset Text file should be loaded
             if sample_name.startswith('E_'):
                 dataset_path = dataset_dict.get('Evaluation')
             elif sample_name.startswith('T_'):
