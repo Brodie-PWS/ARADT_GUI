@@ -27,9 +27,7 @@ def predict_pipeline(model_fpath, chosen_samples):
 
     prediction_list = []
     for sample in chosen_samples:
-        filename = os.path.basename(sample)
-        filename = 'Samples/{}'.format(filename)
-        print(filename)
+        filename = 'Samples/{}'.format(os.path.basename(sample))
 
         # ------ Stage 1: Signal transformation ------
         # Read the input signal:
@@ -91,9 +89,9 @@ def predict_pipeline(model_fpath, chosen_samples):
         # Reformat Prediction
         prediction = pred.tolist()
         if prediction[0] == 1:
-            prediction = f'[{filename}] is [Genuine] Voice'
+            prediction = f'[{os.path.basename(sample)}] is [Genuine] Voice'
         else:
-            prediction = f'[{filename}] is [Spoof] Voice'
+            prediction = f'[{os.path.basename(sample)}] is [Spoof] Voice'
         prediction_list.append(prediction)
 
     return prediction_list

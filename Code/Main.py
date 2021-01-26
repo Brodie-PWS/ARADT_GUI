@@ -10,8 +10,14 @@ import shutil
 import simpleaudio as sa
 import matplotlib.pyplot as plt
 import numpy as np
+import re
 
 global samples, loaded_model
+
+dataset_dict = {'Evaluation': 'Labels/ASVspoof2017_V2_eval.trl.txt',
+                'Developement': 'Labels/ASVspoof2017_V2_eval.trl.txt',
+                'Training': 'Labels/ASVspoof2017_V2_eval.trl.txt'
+                }
 
 def show_frame(frame):
     frame.tkraise()
@@ -174,6 +180,62 @@ def show_last_predictions():
     else:
         messagebox.showinfo('No Results', 'There were no results to retrieve :(')
 
+def verify_predictions():
+    results = {}
+    dataset_path = ''
+    TP = 0
+    TN = 0
+    FP = 0
+    FN = 0
+    if 'predictions' in globals():
+        for prediction in predictions:
+            # Extract Matching Strings from Predictions, Pulls out Filename and Classification
+            sample_format = re.findall('[A-Z]\w+', prediction)
+            # Assign matches to their own variables
+            sample_name = sample_format[0]
+            sample_predicted_label = sample_format[1]
+
+            # Based on the starting letter, determine which
+            if sample_name.startswith('E_'):
+                dataset_path = dataset_dict.get('Evaluation')
+            elif sample_name.startswith('T_'):
+                dataset_path = dataset_dict.get('Training')
+            elif sample_name.startswith('D_'):
+                dataset_path = dataset_dict.get('Developement')
+            print(f'Dataset Path = {dataset_path}\n')
+
+            if dataset_path:
+                labels_txt = open(dataset_path, 'r')
+                lines = labels_txt.readlines()
+                # Look for the line corresponding to sample and retrieve actual label
+                for line in lines:
+                    if sample_name in line:
+                        if 'spoof' in line:
+                            actual_label = 'Spoof'
+                        elif 'genuine' in line:
+                            actual_label = 'Genuine'
+                        print(f'Found Match in line: \n{line}')
+
+            print(f'What the Sample was Predicted to be: {sample_predicted_label}')
+            print(f'What the Sample actually is: {actual_label}')
+            # Determine TP, TN, FP, FN values
+            if actual_label == 'Genuine':
+                if actual_label == sample_predicted_label:
+                    TP += 1
+                else:
+                    FN += 1
+            elif actual_label == 'Spoof':
+                if actual_label == sample_predicted_label:
+                    TN += 1
+                else:
+                    FP += 1
+
+        ACCURACY = (TP + TN) / (TP + TN + FP + FN)
+        FAR = FP / (FP + TN)
+        messagebox.showinfo('Results', f'\nOverall Accuracy: {ACCURACY}\nFAR:{FAR}\n\nTP:{TP}\nTN:{TN}\nFP:{FP}\nFN:{FN}')
+    else:
+        messagebox.showinfo('No Results', 'There were no previous predictions to verify')
+
 def analyse_samples():
     index = 0
     # Prompt User to select Samples for analysis
@@ -310,7 +372,10 @@ make_prediction_button = Button(frame3, fg='white', background='blue', activebac
 make_prediction_button.place(relx=0.50, rely = 0.55, anchor=CENTER)
 
 show_last_predictions_button = Button(frame3, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='blue', text='Show Last Prediction/s', padx=10, pady=10, command = show_last_predictions)
-show_last_predictions_button.place(relx=0.50, rely = 0.75, anchor=CENTER)
+show_last_predictions_button.place(relx=0.60, rely = 0.75, anchor=CENTER)
+
+verify_predictions_button = Button(frame3, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='blue', text='Verify Last Prediction/s', padx=10, pady=10, command = verify_predictions)
+verify_predictions_button.place(relx=0.40, rely = 0.75, anchor=CENTER)
 
 f3_main_menu_button = Button(frame3, fg='white', background='blue', activebackground='blue', font=('Candara', 20, 'bold italic'), activeforeground='pink', text='Main Menu', padx=10, pady=10, command = lambda:show_frame(frame1))
 f3_main_menu_button.place(relx=0.50, rely = 0.90, anchor=CENTER)
