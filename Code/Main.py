@@ -12,7 +12,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import re
 
-global samples, loaded_model
+global samples, loaded_model, popup_displayed
+# Flag which indicates whether or not an instance of a Popup is active
+# Prevents additional windows being created
+popup_displayed = False
 
 dataset_dict = {
     'Evaluation': 'Labels/ASVspoof2017_V2_eval.trl.txt',
@@ -173,10 +176,11 @@ def make_prediction():
     global predictions
     predictions = predict_pipeline(chosen_model[0], chosen_samples)
     formatted_predictions = reformat_predictions(predictions)
-    messagebox.showinfo('Prediction Results', f'{formatted_predictions}')
+    PopUpMsg(f'{formatted_predictions}')
+    # messagebox.showinfo('Prediction Results', f'{formatted_predictions}')
 
 def reformat_predictions(predictions):
-    formatted_predictions = '          ----- PREDICTIONS -----'
+    formatted_predictions = '----- PREDICTIONS -----'
     for prediction in predictions:
         formatted_predictions += '\n' + prediction
     return formatted_predictions
@@ -184,9 +188,11 @@ def reformat_predictions(predictions):
 def show_last_predictions():
     if 'predictions' in globals():
         formatted_predictions = reformat_predictions(predictions)
-        messagebox.showinfo('Prediction Results', f'{formatted_predictions}')
+        PopUpMsg(f'{formatted_predictions}')
+        # messagebox.showinfo('Prediction Results', f'{formatted_predictions}')
     else:
-        messagebox.showinfo('No Results', 'There were no results to retrieve :(')
+        PopUpMsg('There were no results to retrieve :(')
+        # messagebox.showinfo('No Results', 'There were no results to retrieve :(')
 
 def verify_predictions():
     results = {}
@@ -245,11 +251,14 @@ def verify_predictions():
             ACCURACY = (TP + TN) / (TP + TN + FP + FN)
             FAR = FP / (FP + TN)
         except Exception as ex:
-            messagebox.showinfo('Error', 'No labels could be found for selected Sample/s. Therefore the Predictions could not be verified')
+            PopUpMsg('No labels could be found for selected Sample/s. Therefore the Predictions could not be verified')
+            # messagebox.showinfo('Error', 'No labels could be found for selected Sample/s. Therefore the Predictions could not be verified')
             return
-        messagebox.showinfo('Results', f'\nOverall Accuracy: {ACCURACY}\nFAR:{FAR}\n\nTP:{TP}\nTN:{TN}\nFP:{FP}\nFN:{FN}')
+        PopUpMsg(f'\nOverall Accuracy: {ACCURACY}\nFAR:{FAR}\n\nTP:{TP}\nTN:{TN}\nFP:{FP}\nFN:{FN}')
+        # messagebox.showinfo('Results', f'\nOverall Accuracy: {ACCURACY}\nFAR:{FAR}\n\nTP:{TP}\nTN:{TN}\nFP:{FP}\nFN:{FN}')
     else:
-        messagebox.showinfo('No Results', 'There were no previous predictions to verify')
+        PopUpMsg('There were no previous predictions to verify')
+        # messagebox.showinfo('No Results', 'There were no previous predictions to verify')
 
 def analyse_samples():
     index = 0
@@ -290,12 +299,54 @@ def plot_graphs(index, sample_fname):
     # Adjust spacing between Plots
     plt.subplots_adjust(hspace=0.5)
 
+# Class for Creating and Displaying a Custom Popup Message
+class PopUpMsg():
+    def __init__(self, display_str):
+        global popup_displayed
+        self.display_str = display_str
+
+        create_window = self.check_displayed()
+        if create_window:
+            self.popup = Toplevel(window)
+            self.popup.title('Popup')
+            self.popup.geometry('200x150')
+            self.popup.config(bg='#2f2f6d')
+            self.popup.state('zoomed')
+
+            popup_canvas = Canvas(self.popup, width=1000, height=1000)
+            popup_canvas.pack()
+            # Add BG Image to Canvas
+            popup_canvas.create_image(500, 750, image=bg_photo, anchor=CENTER)
+            # Display Message
+            popup_canvas.create_text(500, 150, anchor=CENTER, text=self.display_str, fill='#44DDFF', justify=CENTER)
+
+            ok_button = Button(self.popup, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 11, 'bold italic'), activeforeground='white', text='Ok', padx=2, pady=2, command = self.close_popup)
+            ok_button.place(relx=0.50, rely = 0.85, anchor=CENTER)
+            popup_displayed = True
+            print(f'\nPopup Window Displayed:\n{display_str}')
+        else:
+            return
+
+    def close_popup(self):
+        global popup_displayed
+        self.popup.destroy()
+        popup_displayed = False
+        return
+
+    def check_displayed(self):
+        global popup_displayed
+        if not popup_displayed:
+            return True
+        else:
+            return False
+
 # Define the Window onject
 window = Tk()
 window.title('VOID GUI')
 
 # Define Image
 bg_im = Image.open('Resources/IndexPageImage.png')
+home_im = Image.open('Resources/IndexPageImageTitle.png')
 
 # This Method will open the window automatically when the program starts
 window.state('zoomed')
@@ -318,8 +369,8 @@ for frame in (frame1, frame2, frame3):
 
 # -------------------- FRAME 1 CODE (HOME SCREEN) ---------------------------
 # Converting to ImageTk type so it can be placed in label
-photo = ImageTk.PhotoImage(bg_im)
-f1_im_label = Label(frame1, image=photo)
+home_bg = ImageTk.PhotoImage(home_im)
+f1_im_label = Label(frame1, image=home_bg)
 f1_im_label.place(x=0, y=0, relwidth=1, relheight=1)
 
 # Defining Buttons
@@ -339,7 +390,8 @@ frame1_title.pack(fill='x')
 # ---------------------------- FRAME 2 CODE-----------------------------------
 # Displaying Background Image
 # Converting to ImageTk type so it can be placed in label
-f2_im_label = Label(frame2, image=photo)
+bg_photo = ImageTk.PhotoImage(bg_im)
+f2_im_label = Label(frame2, image=bg_photo)
 f2_im_label.place(x=0, y=0, relwidth=1, relheight=1)
 
 # Defining Buttons
@@ -376,7 +428,7 @@ frame2_title.pack(fill='x')
 
 # ---------------------------- FRAME 3 CODE-----------------------------------
 # Converting to ImageTk type so it can be placed in label
-f3_im_label = Label(frame3, image=photo)
+f3_im_label = Label(frame3, image=home_bg)
 f3_im_label.place(x=0, y=0, relwidth=1, relheight=1)
 
 # Defining Buttons
