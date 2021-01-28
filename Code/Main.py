@@ -11,6 +11,8 @@ import simpleaudio as sa
 import matplotlib.pyplot as plt
 import numpy as np
 import re
+import time
+import glob
 
 global samples, loaded_model, popup_displayed
 # Flag which indicates whether or not an instance of a Popup is active
@@ -175,24 +177,60 @@ def make_prediction():
 
     global predictions
     predictions = predict_pipeline(chosen_model[0], chosen_samples)
-    formatted_predictions = reformat_predictions(predictions)
+    formatted_predictions = reformat_predictions(predictions, chosen_model[0])
+    # Store the Predictions in a Txt file under 'Predictions/'
+    store_predictions(formatted_predictions)
     PopUpMsg(f'{formatted_predictions}')
-    # messagebox.showinfo('Prediction Results', f'{formatted_predictions}')
 
-def reformat_predictions(predictions):
+def reformat_predictions(predictions, chosen_model):
     formatted_predictions = '----- PREDICTIONS -----'
     for prediction in predictions:
         formatted_predictions += '\n' + prediction
+    formatted_predictions += f'\n\nModel Used: {os.path.basename(chosen_model)}'
     return formatted_predictions
 
 def show_last_predictions():
-    if 'predictions' in globals():
-        formatted_predictions = reformat_predictions(predictions)
-        PopUpMsg(f'{formatted_predictions}')
-        # messagebox.showinfo('Prediction Results', f'{formatted_predictions}')
+    # Get list of all Txt files in Predictions directory
+    file_list =  glob.glob('Predictions/*')
+    # Determine the latest file
+    try:
+        latest_file = max(file_list, key=os.path.getctime)
+    except Exception as ex:
+        messagebox.showinfo('Error!', 'There are no previous Predictions to show')
+        return
+
+    # Call function to read txt file into a variable
+    predictions_str = read_txt_file(latest_file)
+    # Display the Message
+    PopUpMsg(f'{predictions_str}')
+
+def read_txt_file(txt_fpath):
+    new_str = ''
+    file = open(txt_fpath, 'r')
+    lines = file.readlines()
+    for line in lines:
+        new_str += line
+    return new_str
+
+def store_predictions(predictions):
+    # Get Current Timestamp for Filename Uniqueness
+    current_timestamp = time.strftime("%d-%m-%Y-(%H%M)")
+    prediction_filename = f'{current_timestamp} Predictions'
+    file = open(f'Predictions/{prediction_filename}', 'w+')
+    if predictions:
+        for prediction in predictions:
+            file.write(prediction)
+        file.close()
     else:
-        PopUpMsg('There were no results to retrieve :(')
-        # messagebox.showinfo('No Results', 'There were no results to retrieve :(')
+        print('There are no Predictions to Store')
+
+def browse_predictions():
+    chosen_txt_file = filedialog.askopenfilename(parent=frame1, initialdir='Predictions/', title='Specify A Prediction File')
+    if chosen_txt_file:
+        predictions_str = read_txt_file(chosen_txt_file)
+        PopUpMsg(f'{predictions_str}')
+    else:
+        messagebox.showinfo('No File Specified!', 'No Prediction file was specified')
 
 def verify_predictions():
     results = {}
@@ -252,13 +290,10 @@ def verify_predictions():
             FAR = FP / (FP + TN)
         except Exception as ex:
             PopUpMsg('No labels could be found for selected Sample/s. Therefore the Predictions could not be verified')
-            # messagebox.showinfo('Error', 'No labels could be found for selected Sample/s. Therefore the Predictions could not be verified')
             return
         PopUpMsg(f'\nOverall Accuracy: {ACCURACY}\nFAR:{FAR}\n\nTP:{TP}\nTN:{TN}\nFP:{FP}\nFN:{FN}')
-        # messagebox.showinfo('Results', f'\nOverall Accuracy: {ACCURACY}\nFAR:{FAR}\n\nTP:{TP}\nTN:{TN}\nFP:{FP}\nFN:{FN}')
     else:
-        PopUpMsg('There were no previous predictions to verify')
-        # messagebox.showinfo('No Results', 'There were no previous predictions to verify')
+        messagebox.showinfo('No Predictions to Verify', 'There are no previous predictions to verify')
 
 def analyse_samples():
     index = 0
@@ -433,10 +468,13 @@ f3_im_label.place(x=0, y=0, relwidth=1, relheight=1)
 
 # Defining Buttons
 analyse_samples_button = Button(frame3, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Analyse Sample/s', padx=10, pady=10, command = analyse_samples)
-analyse_samples_button.place(relx=0.5, rely=0.45, anchor=CENTER)
+analyse_samples_button.place(relx=0.5, rely=0.35, anchor=CENTER)
 
 make_prediction_button = Button(frame3, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Make A Prediction', padx=10, pady=10, command = make_prediction)
-make_prediction_button.place(relx=0.50, rely = 0.55, anchor=CENTER)
+make_prediction_button.place(relx=0.50, rely = 0.45, anchor=CENTER)
+
+browse_predictions_button = Button(frame3, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='View Previous Predictions', padx=10, pady=10, command = browse_predictions)
+browse_predictions_button.place(relx=0.50, rely = 0.65, anchor=CENTER)
 
 show_last_predictions_button = Button(frame3, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Show Last Prediction/s', padx=10, pady=10, command = show_last_predictions)
 show_last_predictions_button.place(relx=0.60, rely = 0.75, anchor=CENTER)
