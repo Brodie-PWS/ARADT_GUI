@@ -216,7 +216,11 @@ def store_predictions(predictions):
     # Get Current Timestamp for Filename Uniqueness
     current_timestamp = time.strftime("%d-%m-%Y-(%H%M)")
     prediction_filename = f'{current_timestamp} Predictions'
+    # Create Directory if it doesn't already exist
+    if not os.path.exists('Predictions/'):
+        os.makedirs('Predictions/')
     file = open(f'Predictions/{prediction_filename}', 'w+')
+
     if predictions:
         for prediction in predictions:
             file.write(prediction)
