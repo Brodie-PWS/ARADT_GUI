@@ -264,8 +264,8 @@ def verify_predictions():
             print(f'Dataset Path = {dataset_path}\n')
 
             if dataset_path:
-                labels_txt = open(dataset_path, 'r')
-                lines = labels_txt.readlines()
+                labels_txt_path = open(dataset_path, 'r')
+                lines = labels_txt_path.readlines()
                 # Look for the line corresponding to sample and retrieve actual label
                 for line in lines:
                     if sample_name in line:
@@ -338,6 +338,62 @@ def plot_graphs(index, sample_fname):
     # Adjust spacing between Plots
     plt.subplots_adjust(hspace=0.5)
 
+def create_new_model():
+    valid_models = ['SVM', 'svm', 'KNN', 'knn']
+    model_settings = {}
+    # Prompt for Model Type, C Val and Kernel Type
+    model_type = simpledialog.askstring('Input Model Type:', 'Please Specify The Type of Model (SVM)')
+    if not model_type:
+        messagebox.showinfo('No Model Type Specified', 'A Model Type was not specified')
+        return
+    elif model_type not in valid_models:
+        messagebox.showinfo('Invalid Type', 'The specified Model Type is not a valid Type')
+        return
+
+    if model_type == 'svm' or 'SVM':
+        c_val = simpledialog.askinteger('Input C Parameter Value:', 'Please Specify Value of the C Parameter')
+        if not c_val:
+            return
+        kernel = simpledialog.askstring('Input Kernel Type', 'Please Specify a Kernel Type from [RBF, Poly, Linear]')
+        if not kernel:
+            return
+
+    model_settings['c_val'] = c_val
+    model_settings['kernel'] = kernel
+
+    classifier = make_model(model_type, model_settings)
+    train_model(classifier)
+    print(classifier)
+
+def create_dataset():
+    chosen_samples  = filedialog.askopenfilenames(parent=frame1, initialdir='Samples/', title='Select Audio Files')
+    labels_txt_path = filedialog.askopenfilename(parent=frame1, initialdir='Labels/', title='Select A Text File Containing Labels')
+    # Create Associations between Samples and Labels
+    associations_dict = get_associations(chosen_samples, labels_txt_path)
+    # Extract Features
+    extracted_features = extract_features(associations_dict)
+    # Store Extracted Features in NPY File
+    store_extracted_features(extracted_features)
+
+def get_associations(chosen_samples, labels_txt_path):
+    associations_dict = {}
+    print(f'Chosen_samples:{chosen_samples}\nlabels_txt_path:{labels_txt_path}')
+
+    # Load labels text file and read lines into variable:
+    with open(labels_txt_path, 'r') as f:
+        lines = f.read().splitlines()
+
+    for sample in chosen_samples:
+        sample_filename = os.path.basename(sample)
+        for line in lines:
+            if sample_filename in line:
+                if 'spoof' in line:
+                    associations_dict[sample] = 0
+                elif 'genuine' in line:
+                    associations_dict[sample] = 1
+
+    return associations_dict
+
 # Class for Creating and Displaying a Custom Popup Message
 class PopUpMsg():
     def __init__(self, display_str):
@@ -401,9 +457,11 @@ frame1 = Frame(window)
 frame2 = Frame(window)
 # Prediction Screen
 frame3 = Frame(window)
+# Model Maker Screen
+frame4 = Frame(window)
 
 # Display all the ferame
-for frame in (frame1, frame2, frame3):
+for frame in (frame1, frame2, frame3, frame4):
     frame.grid(row=0, column=0, sticky='nsew')
 
 # -------------------- FRAME 1 CODE (HOME SCREEN) ---------------------------
@@ -414,10 +472,13 @@ f1_im_label.place(x=0, y=0, relwidth=1, relheight=1)
 
 # Defining Buttons
 sample_button = Button(frame1, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Sample Management', padx=10, pady=10, command = lambda:show_frame(frame2))
-sample_button.place(relx=0.50, rely = 0.45, anchor=CENTER)
+sample_button.place(relx=0.50, rely = 0.40, anchor=CENTER)
+
+model_management_button = Button(frame1, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Model Management', padx=10, pady=10, command = lambda:show_frame(frame4))
+model_management_button.place(relx=0.50, rely = 0.55, anchor=CENTER)
 
 prediction_button = Button(frame1, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='ENTER THE VOID', padx=10, pady=10, command = lambda:show_frame(frame3))
-prediction_button.place(relx=0.50, rely = 0.60, anchor=CENTER)
+prediction_button.place(relx=0.50, rely = 0.70, anchor=CENTER)
 
 # Exit Button
 exit_button = Button(frame1, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Exit the App', padx=10, pady=10, command = window.destroy)
@@ -491,6 +552,31 @@ f3_main_menu_button.place(relx=0.50, rely = 0.90, anchor=CENTER)
 
 frame3_title = Label(frame3, text='The VOID', bg='#44DDFF')
 frame3_title.pack(fill='x')
+
+# ---------------------------- FRAME 4 CODE-----------------------------------
+# Converting to ImageTk type so it can be placed in label
+f4_im_label = Label(frame4, image=home_bg)
+f4_im_label.place(x=0, y=0, relwidth=1, relheight=1)
+
+# Defining Buttons
+create_dataset_button = Button(frame4, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Create The Dataset', padx=10, pady=10, command = create_dataset)
+create_dataset_button.place(relx=0.5, rely=0.35, anchor=CENTER)
+
+view_dataset_button = Button(frame4, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Edit The Dataset', padx=10, pady=10, command = create_dataset)
+view_dataset_button.place(relx=0.5, rely=0.45, anchor=CENTER)
+
+create_model_button = Button(frame4, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Create A New Model', padx=10, pady=10, command = create_new_model)
+create_model_button.place(relx=0.5, rely=0.65, anchor=CENTER)
+
+load_model_button = Button(frame4, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Load A Model', padx=10, pady=10, command = make_prediction)
+load_model_button.place(relx=0.50, rely = 0.75, anchor=CENTER)
+
+# When pressed will take User back to the main menu
+f4_main_menu_button = Button(frame4, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Main Menu', padx=10, pady=10, command = lambda:show_frame(frame1))
+f4_main_menu_button.place(relx=0.50, rely = 0.90, anchor=CENTER)
+
+frame4_title = Label(frame4, text='Model Management', bg='#44DDFF')
+frame4_title.pack(fill='x')
 
 show_frame(frame1)
 
