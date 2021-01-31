@@ -366,14 +366,27 @@ def create_new_model():
     print(classifier)
 
 def create_dataset():
+    print('\n------------CREATING DATASET------------')
     chosen_samples  = filedialog.askopenfilenames(parent=frame1, initialdir='Samples/', title='Select Audio Files')
     labels_txt_path = filedialog.askopenfilename(parent=frame1, initialdir='Labels/', title='Select A Text File Containing Labels')
+
     # Create Associations between Samples and Labels
-    associations_dict = get_associations(chosen_samples, labels_txt_path)
+    associations_dict, missed_labels = get_associations(chosen_samples, labels_txt_path)
+    print(f'Associations:{associations_dict}')
+    print(f'Missed_labels:{missed_labels}')
+
+    message = create_association_report_str(associations_dict, missed_labels)
+
     # Extract Features
     extracted_features = extract_features(associations_dict)
     # Store Extracted Features in NPY File
     store_extracted_features(extracted_features)
+
+    # SEVERAL HOURS LATER ....
+    # For some mysterious reason I am not smart enough to understand, displaying the Report message before extracting the features causes everything to explode :(
+    # Displaying it here works fine, thats enough for me...
+    PopUpMsg(f'{message}')
+    print('----------------------------------------')
 
 def get_associations(chosen_samples, labels_txt_path):
     associations_dict = {}
@@ -383,16 +396,52 @@ def get_associations(chosen_samples, labels_txt_path):
     with open(labels_txt_path, 'r') as f:
         lines = f.read().splitlines()
 
+    found_list = []
+    chosen_samples_name_list = []
+    # Iterate through all selected Samples and try to find labels for each of them
+    # from the Labels Text file
     for sample in chosen_samples:
         sample_filename = os.path.basename(sample)
+        chosen_samples_name_list.append(sample_filename)
         for line in lines:
             if sample_filename in line:
                 if 'spoof' in line:
                     associations_dict[sample] = 0
+                    found_list.append(sample_filename)
                 elif 'genuine' in line:
                     associations_dict[sample] = 1
+                    found_list.append(sample_filename)
 
-    return associations_dict
+    # Determine which Samples labels could not be found for by getting
+    # difference between the list specified Samples and the list of samples
+    # that labels could be found for (Used in building Report String)
+    missed_labels = get_list_difference(found_list, chosen_samples_name_list)
+    print(f'Labels Found: {found_list}')
+    print(f'Missed Labels = {missed_labels}')
+    return associations_dict, missed_labels
+
+def get_list_difference(list1, list2):
+    difference = [i for i in list1 + list2 if i not in list1 or i not in list2]
+    return difference
+
+def create_association_report_str(associations_dict, missed_labels):
+    report_str = '----------- Label Association Report -----------'
+    report_str += '\n------ Labels Found For ------'
+    for key, value in associations_dict.items():
+        # print(f'Key: {key}\nValue: {value}')
+        if value == 0:
+            report_str += f'\nLabel found for {os.path.basename(key)}: Spoof (0)'
+        elif value == 1:
+            report_str += f'\nLabel found for {os.path.basename(key)}: Genuine (1)'
+
+    if len(missed_labels) != 0:
+        report_str += '\n\n------ Not Found For ------'
+        for sample_name in missed_labels:
+            report_str += f'\nCould not find Label for {sample_name}'
+        report_str += '\n------------------------------------------------'
+
+    report_str += '\n\nEXTRACTED FEATURES FOR SAMPLES WITH LABELS'
+    return report_str
 
 # Class for Creating and Displaying a Custom Popup Message
 class PopUpMsg():
@@ -561,9 +610,6 @@ f4_im_label.place(x=0, y=0, relwidth=1, relheight=1)
 # Defining Buttons
 create_dataset_button = Button(frame4, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Create The Dataset', padx=10, pady=10, command = create_dataset)
 create_dataset_button.place(relx=0.5, rely=0.35, anchor=CENTER)
-
-view_dataset_button = Button(frame4, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Edit The Dataset', padx=10, pady=10, command = create_dataset)
-view_dataset_button.place(relx=0.5, rely=0.45, anchor=CENTER)
 
 create_model_button = Button(frame4, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Create A New Model', padx=10, pady=10, command = create_new_model)
 create_model_button.place(relx=0.5, rely=0.65, anchor=CENTER)
