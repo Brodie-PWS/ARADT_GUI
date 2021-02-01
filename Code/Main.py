@@ -363,18 +363,25 @@ def create_new_model():
 
     classifier = make_model(model_type, model_settings)
     train_model(classifier)
-    print(classifier)
+    return
 
 def create_dataset():
     print('\n------------CREATING DATASET------------')
     chosen_samples  = filedialog.askopenfilenames(parent=frame1, initialdir='Samples/', title='Select Audio Files')
+    if not chosen_samples:
+        messagebox.showinfo('No Files Selected!', 'Ensure you have selected Audio Files')
+        return
     labels_txt_path = filedialog.askopenfilename(parent=frame1, initialdir='Labels/', title='Select A Text File Containing Labels')
+    if not labels_txt_path:
+        messagebox.showinfo('No Labels File Selected!', 'Ensure you have selected a Labels Text file')
+        return
 
     # Create Associations between Samples and Labels
     associations_dict, missed_labels = get_associations(chosen_samples, labels_txt_path)
     print(f'Associations:{associations_dict}')
     print(f'Missed_labels:{missed_labels}')
 
+    # Build the Association Report String to be displayed later
     message = create_association_report_str(associations_dict, missed_labels)
 
     # Extract Features
@@ -382,11 +389,37 @@ def create_dataset():
     # Store Extracted Features in NPY File
     store_extracted_features(extracted_features)
 
-    # SEVERAL HOURS LATER ....
-    # For some mysterious reason I am not smart enough to understand, displaying the Report message before extracting the features causes everything to explode :(
-    # Displaying it here works fine, thats enough for me...
+    # Display Assocation Report
     PopUpMsg(f'{message}')
     print('----------------------------------------')
+    return
+
+def make_labels_file():
+    print('Creating Labels Text File')
+    filepath = create_labels_text_file_template()
+    TextEditor(window, filepath)
+    return
+
+def edit_labels_file():
+    print('Editing Labels Text File')
+    filepath = filedialog.askopenfilename(parent=frame1, initialdir='Labels/', title='Select A Text File To Edit')
+    if not filepath:
+        messagebox.showinfo('No File Selected!', 'Ensure you have selected a Text file to Edit')
+        return
+    TextEditor(window, filepath)
+    return
+
+def create_labels_text_file_template():
+    chosen_samples  = filedialog.askopenfilenames(parent=frame1, initialdir='Samples/', title='Select Audio Files')
+    # Create a Template based on the selected Samples
+    filename = 'Labels/TestNew.txt'
+    with open(filename, 'w') as file:
+        for sample in chosen_samples:
+            sample_fname = os.path.basename(sample)
+            file.write(f'{sample_fname} Label\n')
+
+    print('Created Template Text File based on the selected Samples')
+    return filename
 
 def get_associations(chosen_samples, labels_txt_path):
     associations_dict = {}
@@ -442,6 +475,71 @@ def create_association_report_str(associations_dict, missed_labels):
 
     report_str += '\n\nEXTRACTED FEATURES FOR SAMPLES WITH LABELS'
     return report_str
+
+class TextEditor():
+    def __init__(self, window, txt_fpath=None):
+        self.window = Toplevel(window)
+        self.window.geometry('600x450')
+        self.window.title('Text Editor')
+        self.window.config(bg='#44DDFF')
+        self.file_path = txt_fpath
+
+        # Create Textspace
+        self.textspace = Text(self.window)
+        self.textspace.grid(row=0, column=0)
+
+        # If a File Path was passed in, construct the Text Editor with the template
+        if self.file_path:
+            with open(self.file_path, 'r') as file:
+                self.textspace.delete(0.0, END)
+                self.textspace.insert(0.0, file.read() + '\n')
+                file.close()
+
+        # Object was called with a Filepath
+        if self.file_path:
+            Button(self.window, text='Save', command= lambda:self.updatefile(self.file_path)).grid(row=1, column=0)
+        else:
+            Button(self.window, text='Save', command=self.savefile).grid(row=1, column=0)
+        Button(self.window, text='Save As', command=self.saveasfile).grid(row=2, column=0)
+
+    def savefile(self):
+        savewindow = Tk()
+        savewindow.geometry('250x40')
+        filecontents = self.textspace.get(0.0, END)
+
+        def writefile():
+            with open(file_name_entry.get() + '.txt', 'w+') as file:
+                file.write(filecontents)
+                file.close()
+                savewindow.destroy()
+            return None
+
+        Label(savewindow, text='File Name').grid(row=0, column=0)
+        file_name_entry = Entry(savewindow, width=40)
+        file_name_entry.grid(row=0, column=0)
+
+        Button(savewindow, text='Save', command=writefile).grid(row=0, column=2)
+
+    def saveasfile(self):
+        prefix = 'Labels/'
+        save_name = simpledialog.askstring('Enter the Filename', 'Enter the Name of the File')
+        filecontents = self.textspace.get(0.0, END)
+
+        if save_name:
+            with open(prefix + save_name + '.txt', 'w+') as file:
+                file.write(filecontents)
+                file.close()
+        else:
+            print('No name was specified, file was not saved!')
+            return
+        return
+
+    def updatefile(self, file_name):
+        filecontents = self.textspace.get(0.0, END)
+        with open(file_name, 'w+') as file:
+            file.write(filecontents)
+            file.close()
+            self.window.destroy()
 
 # Class for Creating and Displaying a Custom Popup Message
 class PopUpMsg():
@@ -608,14 +706,17 @@ f4_im_label = Label(frame4, image=home_bg)
 f4_im_label.place(x=0, y=0, relwidth=1, relheight=1)
 
 # Defining Buttons
+create_labels_button = Button(frame4, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Create A Labels File', padx=10, pady=10, command = make_labels_file)
+create_labels_button.place(relx=0.5, rely=0.35, anchor=CENTER)
+
+edit_labels_button = Button(frame4, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Edit A Labels File', padx=10, pady=10, command = edit_labels_file)
+edit_labels_button.place(relx=0.5, rely=0.45, anchor=CENTER)
+
 create_dataset_button = Button(frame4, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Create The Dataset', padx=10, pady=10, command = create_dataset)
-create_dataset_button.place(relx=0.5, rely=0.35, anchor=CENTER)
+create_dataset_button.place(relx=0.5, rely=0.60, anchor=CENTER)
 
 create_model_button = Button(frame4, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Create A New Model', padx=10, pady=10, command = create_new_model)
-create_model_button.place(relx=0.5, rely=0.65, anchor=CENTER)
-
-load_model_button = Button(frame4, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Load A Model', padx=10, pady=10, command = make_prediction)
-load_model_button.place(relx=0.50, rely = 0.75, anchor=CENTER)
+create_model_button.place(relx=0.5, rely=0.75, anchor=CENTER)
 
 # When pressed will take User back to the main menu
 f4_main_menu_button = Button(frame4, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Main Menu', padx=10, pady=10, command = lambda:show_frame(frame1))
