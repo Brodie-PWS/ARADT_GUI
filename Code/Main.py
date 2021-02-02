@@ -360,10 +360,11 @@ def plot_graphs(index, sample_fname):
     plt.subplots_adjust(hspace=0.5)
 
 def create_new_model():
-    valid_models = ['SVM', 'svm', 'KNN', 'knn']
+    valid_models = ['SVM', 'svm', 'KNN', 'knn', 'nn', 'NN', 'mlp', 'MLP']
     model_settings = {}
+    model_type = None
     # Prompt for Model Type, C Val and Kernel Type
-    model_type = simpledialog.askstring('Input Model Type:', 'Please Specify The Type of Model (SVM)')
+    model_type = simpledialog.askstring('Input Model Type:', 'Please Specify The Type of Model (SVM, (NN, MLP))')
     if not model_type:
         messagebox.showinfo('No Model Type Specified', 'A Model Type was not specified')
         return
@@ -371,7 +372,7 @@ def create_new_model():
         messagebox.showinfo('Invalid Type', 'The specified Model Type is not a valid Type')
         return
 
-    if model_type == 'svm' or 'SVM':
+    if model_type in valid_models and model_type == 'svm' or model_type == 'SVM':
         c_val = simpledialog.askstring('Input C Parameter Value:', 'Please Specify Value of the C Parameter')
         if not c_val:
             return
@@ -384,13 +385,41 @@ def create_new_model():
         kernel = simpledialog.askstring('Input Kernel Type', 'Please Specify a Kernel Type from [RBF, Poly, Linear]')
         if not kernel:
             return
-
-    model_settings['c_val'] = c_val_float
-    model_settings['kernel'] = kernel
+        model_settings['c_val'] = c_val_float
+        model_settings['kernel'] = kernel
+    if model_type in valid_models and model_type == 'NN' or 'nn' or 'MLP' or 'mlp':
+        solver_val =  simpledialog.askstring('Input Solver Type', 'Please Specify a Solver Type from [lbfgs, sgd, adam]')
+        if not solver_val:
+            return
+        activation_val =  simpledialog.askstring('Input Activation Function Type', 'Please Specify an Activation function from [Identify, Logistic, Tanh, Relu]')
+        if not activation_val:
+            return
+        max_iter_val = simpledialog.askinteger('Input the Number of Iterations', 'Specify the Number of Iterations the Model will do')
+        if not max_iter_val:
+            return
+        model_settings['solver_val'] = solver_val
+        model_settings['activation_val'] = activation_val
+        model_settings['max_iter_val'] = max_iter_val
 
     classifier = make_model(model_type, model_settings)
+    print(f'Successfully Created Classifer:{classifier}')
     train_model(classifier)
     return
+
+def create_optimized_model():
+    valid_models = ['SVM', 'svm', 'KNN', 'knn', 'nn', 'NN', 'mlp', 'MLP']
+
+    # Prompt for Model Type, C Val and Kernel Type
+    model_type = simpledialog.askstring('Input Model Type:', 'Please Specify The Type of Model (SVM, (NN, MLP))')
+    if not model_type:
+        messagebox.showinfo('No Model Type Specified', 'A Model Type was not specified')
+        return
+    elif model_type not in valid_models:
+        messagebox.showinfo('Invalid Type', 'The specified Model Type is not a valid Type')
+        return
+
+    features_labels_fpath = filedialog.askopenfilename(parent=frame1, initialdir='Extracted_Features/', title='Select ')
+    make_optimised_model(model_type, features_labels_fpath)
 
 def create_dataset():
     print('\n------------CREATING DATASET------------')
@@ -743,15 +772,18 @@ create_labels_button.place(relx=0.5, rely=0.35, anchor=CENTER)
 edit_labels_button = Button(frame4, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Edit A Labels File', padx=10, pady=10, command = edit_labels_file)
 edit_labels_button.place(relx=0.5, rely=0.45, anchor=CENTER)
 
-create_dataset_button = Button(frame4, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Create The Dataset', padx=10, pady=10, command = create_dataset)
+create_dataset_button = Button(frame4, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Create A Dataset & Extract Features', padx=10, pady=10, command = create_dataset)
 create_dataset_button.place(relx=0.5, rely=0.60, anchor=CENTER)
 
-create_model_button = Button(frame4, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Create A New Model', padx=10, pady=10, command = create_new_model)
+create_model_button = Button(frame4, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Create New Model', padx=10, pady=10, command = create_new_model)
 create_model_button.place(relx=0.5, rely=0.75, anchor=CENTER)
+
+create_optimized_model_button = Button(frame4, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Create Optimized Model', padx=10, pady=10, command = create_optimized_model)
+create_optimized_model_button.place(relx=0.5, rely=0.85, anchor=CENTER)
 
 # When pressed will take User back to the main menu
 f4_main_menu_button = Button(frame4, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Main Menu', padx=10, pady=10, command = lambda:show_frame(frame1))
-f4_main_menu_button.place(relx=0.50, rely = 0.90, anchor=CENTER)
+f4_main_menu_button.place(relx=0.20, rely = 0.5, anchor=CENTER)
 
 frame4_title = Label(frame4, text='Model Management', bg='#44DDFF')
 frame4_title.pack(fill='x')

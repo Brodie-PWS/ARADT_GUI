@@ -12,6 +12,8 @@ import time
 import glob
 import pickle
 from sklearn import svm
+from sklearn.neural_network import MLPClassifier
+from sklearn.model_selection import GridSearchCV
 from feature_extraction import LinearityDegreeFeatures, HighPowerFrequencyFeatures, extract_lpcc, calc_stft, _stft
 
 def extract_features(associations_dict):
@@ -187,15 +189,90 @@ def predict(model, feature_vector):
     return pred
 
 def make_model(model_type, model_params):
+    print('\n-------------------- CREATING NEW MODEL --------------------')
+    print(f'Model Type: {model_type}\nModel Parameters:{model_params}')
     classifier = None
-    if model_type == 'SVM' or model_type == 'svm':
+    svm_types = ['SVM', 'svm']
+    mlp_types = ['MLP', 'mlp', 'NN', 'nn']
+    if model_type in svm_types:
         c_val, kernel = unpack_dict(model_params, 'c_val', 'kernel')
-        classifier = svm.SVC(C=float(c_val), kernel=kernel.lower(), gamma='auto', class_weight=None)
+        classifier = svm.SVC(C=c_val, kernel=kernel.lower(), gamma='auto', class_weight=None)
+        return classifier
+    elif model_type in mlp_types:
+        solver_val, activation_val, max_iter_val = unpack_dict(model_params, 'solver_val', 'activation_val', 'max_iter_val')
+        classifier = MLPClassifier(solver=solver_val, activation=activation_val, max_iter=max_iter_val)
         return classifier
     else:
-        print('Hello')
+        print(f'Could not create a Model with type: {model_type}')
+
+def make_optimised_model(model_type, features_labels_fpath=None):
+    print('\n-------------------- CREATING NEW OPTIMIZED MODEL --------------------')
+    print(f'Model Type: {model_type}')
+    classifier = None
+    parameter_space = {}
+    svm_types = ['SVM', 'svm']
+    mlp_types = ['MLP', 'mlp', 'NN', 'nn']
+    if model_type in svm_types:
+        classifier = svm.SVC()
+        parameter_space = {
+            'c': [0, 1],
+            'kernel': ['rbf', 'linear', 'poly']
+        }
+    elif model_type in mlp_types:
+        classifier = MLPClassifier(max_iter=10000)
+        parameter_space = {
+            'hidden_layer_sizes': [(25,25,25), (50,50,50), (50, 100, 50), (100,)],
+            'activation': ['relu', 'tanh'],
+            'solver': ['lbfgs', 'sgd', 'adam'],
+            'alpha': [0.0001, 0.001, 0.01, 0.05],
+            'learning_rate': ['constant', 'adaptive']
+        }
+    else:
+        print(f'Cannot create a Classifier with Model Type: {model_type}')
+
+    if classifier and parameter_space:
+        print(f'\nPerforming Automated Parameter Tuning on {classifier.__class__.__name__} using: \n{parameter_space}')
+        # If a Path was provided use it, otherwise use the latest file
+        if features_labels_fpath:
+            file_to_load = features_labels_fpath
+        else:
+            file_list =  glob.glob('Extracted_Features/*')
+            # Determine the latest file
+            try:
+                file_to_load = max(file_list, key=os.path.getctime)
+            except Exception as ex:
+                messagebox.showinfo('Error!', 'There are no files in the Extracted Features Directory')
+                return
+
+        print(f'Using File [{file_to_load}] to Train the Model')
+
+        # Load File
+        extracted_features = np.load(file_to_load, allow_pickle=True)
+        # Load the Void features and corresponding labels:
+        x_train, y_train = np.split(extracted_features, indices_or_sections=(97,), axis=1)
+
+        clf = GridSearchCV(classifier, parameter_space, n_jobs=-1, cv=2)
+        clf.fit(x_train, y_train.ravel())
+
+        print('\nFinished Automated Tuning')
+        print(f'Best Parameters found: {clf.best_params_}')
+        # All results
+        print('\nSummary of all Parameter Combinations')
+        means = clf.cv_results_['mean_test_score']
+        stds = clf.cv_results_['std_test_score']
+        for mean, std, params in zip(means, stds, clf.cv_results_['params']):
+            print("%0.3f (+/-%0.03f) for %r" % (mean, std * 2, params))
+
+        # Save Model
+        s = pickle.dumps(clf)
+        save_name = os.path.join(os.getcwd(), 'Models', f'{clf.__class__.__name__}.pkl')
+        f = open(save_name, 'wb+')
+        f.write(s)
+        f.close()
+        print("Model saved into " + save_name)
 
 def train_model(model):
+    print('\n-------------------- TRAINING NEW MODEL --------------------')
     # Get list of all Txt files in Extracted Features directory
     file_list =  glob.glob('Extracted_Features/*')
     # Determine the latest file
@@ -205,7 +282,7 @@ def train_model(model):
         messagebox.showinfo('Error!', 'There are no previous Predictions to show')
         return
 
-    print(f'Latest_File:{latest_file}')
+    print(f'Using File [{latest_file}] to Train the Model')
 
     # Load File
     extracted_features = np.load(latest_file, allow_pickle=True)
@@ -217,7 +294,7 @@ def train_model(model):
 
     # Save Model
     s = pickle.dumps(model)
-    save_name = os.path.join(os.getcwd(), 'Models', 'new_model.pkl')
+    save_name = os.path.join(os.getcwd(), 'Models', f'{model.__class__.__name__}.pkl')
     f = open(save_name, 'wb+')
     f.write(s)
     f.close()
