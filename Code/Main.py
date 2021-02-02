@@ -13,6 +13,8 @@ import numpy as np
 import re
 import time
 import glob
+import librosa
+import librosa.display
 
 global samples, loaded_model, popup_displayed
 # Flag which indicates whether or not an instance of a Popup is active
@@ -324,16 +326,28 @@ def plot_graphs(index, sample_fname):
     plt.suptitle('Analysis of {}'.format(filename))
 
     # Generate Spectrogram of Signal
-    c = plt.subplot(311)
-    Pxx, freqs, bins, im = c.specgram(sig, NFFT=1024, Fs=16000, noverlap=900)
+    c = plt.subplot(221)
+    c.title.set_text('Spectrogram')
     c.set_xlabel('Time')
     c.set_ylabel('Frequency')
+    Pxx, freqs, bins, im = c.specgram(sig, NFFT=1024, Fs=16000, noverlap=900)
+
     # Generate PSD (Power Spectral Density) plot of Signal
-    p = plt.subplot(312)
+    p = plt.subplot(224)
+    p.title.set_text('Power Spectral Density Features (PSD)')
     plt.psd(sig, color='blue')
+
     # Generate Magnitude Spectrum plot of Signal
-    ms = plt.subplot(313)
+    ms = plt.subplot(223)
+    ms.title.set_text('Magnitude Spectrum')
     plt.magnitude_spectrum(sig, color='blue')
+
+    # Generate MFCC Plot of the Signal
+    librosa_sig, sr = librosa.load(sample_fname)
+    mfcc = plt.subplot(222)
+    mfcc.title.set_text('Mel-Frequency Cepstral Coefficients (MFCC)')
+    mfccs = librosa.feature.mfcc(librosa_sig)
+    librosa.display.specshow(mfccs, sr=sr, x_axis='time')
 
     # Adjust spacing between Plots
     plt.subplots_adjust(hspace=0.5)
