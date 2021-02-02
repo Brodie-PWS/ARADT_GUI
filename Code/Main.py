@@ -574,9 +574,13 @@ class PopUpMsg():
             # Add BG Image to Canvas
             popup_canvas.create_image(500, 750, image=bg_photo, anchor=CENTER)
             # Display Message
-            popup_canvas.create_text(500, 150, anchor=CENTER, text=self.display_str, fill='#44DDFF', justify=CENTER)
+            self.textspace = Text(self.popup, bg='#2f2f6d', fg='white', font=('Candara', 12))
+            self.textspace.insert(0.0, self.display_str)
+            self.textspace.tag_configure('center', justify='center')
+            self.textspace.tag_add('center', '1.0', 'end')
+            self.textspace.place(relx=0.50, rely = 0.35, anchor=CENTER)
 
-            ok_button = Button(self.popup, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 11, 'bold italic'), activeforeground='white', text='Ok', padx=2, pady=2, command = self.close_popup)
+            ok_button = Button(self.popup, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 12, 'bold italic'), activeforeground='white', text='Ok', padx=2, pady=2, command = self.close_popup)
             ok_button.place(relx=0.50, rely = 0.85, anchor=CENTER)
             popup_displayed = True
             print(f'\nPopup Window Displayed:\n{display_str}')
