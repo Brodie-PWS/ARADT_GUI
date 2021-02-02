@@ -186,8 +186,15 @@ def make_prediction():
 
 def reformat_predictions(predictions, chosen_model):
     formatted_predictions = '----- PREDICTIONS -----'
+    spoof_counter = 0
+    genuine_counter = 0
     for prediction in predictions:
+        if '[Spoof]' in prediction:
+            spoof_counter += 1
+        elif '[Genuine]' in prediction:
+            genuine_counter += 1
         formatted_predictions += '\n' + prediction
+    formatted_predictions += f'\n\nGenuine Samples: {genuine_counter}\nSpoof Samples: {spoof_counter}'
     formatted_predictions += f'\n\nModel Used: {os.path.basename(chosen_model)}'
     return formatted_predictions
 
@@ -365,14 +372,20 @@ def create_new_model():
         return
 
     if model_type == 'svm' or 'SVM':
-        c_val = simpledialog.askinteger('Input C Parameter Value:', 'Please Specify Value of the C Parameter')
+        c_val = simpledialog.askstring('Input C Parameter Value:', 'Please Specify Value of the C Parameter')
         if not c_val:
             return
+        else:
+            try:
+                c_val_float = float(c_val)
+            except Exception as ex:
+                print(f'Error when casting User Input [{c_val}] to float value')
+                return
         kernel = simpledialog.askstring('Input Kernel Type', 'Please Specify a Kernel Type from [RBF, Poly, Linear]')
         if not kernel:
             return
 
-    model_settings['c_val'] = c_val
+    model_settings['c_val'] = c_val_float
     model_settings['kernel'] = kernel
 
     classifier = make_model(model_type, model_settings)
@@ -574,7 +587,7 @@ class PopUpMsg():
             # Add BG Image to Canvas
             popup_canvas.create_image(500, 750, image=bg_photo, anchor=CENTER)
             # Display Message
-            self.textspace = Text(self.popup, bg='#2f2f6d', fg='white', font=('Candara', 12))
+            self.textspace = Text(self.popup, bg='#2f2f6d', fg='white', font=('Candara', 12), pady=10)
             self.textspace.insert(0.0, self.display_str)
             self.textspace.tag_configure('center', justify='center')
             self.textspace.tag_add('center', '1.0', 'end')
