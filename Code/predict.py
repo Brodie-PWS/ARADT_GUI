@@ -13,6 +13,7 @@ import glob
 import pickle
 from sklearn import svm
 from sklearn.neural_network import MLPClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GridSearchCV
 from feature_extraction import LinearityDegreeFeatures, HighPowerFrequencyFeatures, extract_lpcc, calc_stft, _stft
 
@@ -99,6 +100,8 @@ def store_extracted_features(extracted_features):
     np.save(filename, extracted_features)
 
 def predict_pipeline(model_fpath, chosen_samples):
+    print(model_fpath)
+    print(chosen_samples)
     # Initialize parameters:
     W = 14
     # Peak selection threshold:
@@ -194,6 +197,7 @@ def make_model(model_type, model_params):
     classifier = None
     svm_types = ['SVM', 'svm']
     mlp_types = ['MLP', 'mlp', 'NN', 'nn']
+    rf_types = ['RF', 'rf']
     if model_type in svm_types:
         c_val, kernel = unpack_dict(model_params, 'c_val', 'kernel')
         classifier = svm.SVC(C=c_val, kernel=kernel.lower(), gamma='auto', class_weight=None)
@@ -201,6 +205,10 @@ def make_model(model_type, model_params):
     elif model_type in mlp_types:
         solver_val, activation_val, max_iter_val = unpack_dict(model_params, 'solver_val', 'activation_val', 'max_iter_val')
         classifier = MLPClassifier(solver=solver_val, activation=activation_val, max_iter=max_iter_val)
+        return classifier
+    elif model_type in rf_types:
+        n_estimators_val, max_depth_val = unpack_dict(model_params, 'n_estimators_val', 'max_depth_val')
+        classifier = RandomForestClassifier(n_estimators=n_estimators_val, max_depth=max_depth_val)
         return classifier
     else:
         print(f'Could not create a Model with type: {model_type}')
@@ -212,6 +220,7 @@ def make_optimised_model(model_type, features_labels_fpath=None):
     parameter_space = {}
     svm_types = ['SVM', 'svm']
     mlp_types = ['MLP', 'mlp', 'NN', 'nn']
+    rf_types = ['rf', 'RF']
     if model_type in svm_types:
         classifier = svm.SVC()
         parameter_space = {
@@ -227,10 +236,17 @@ def make_optimised_model(model_type, features_labels_fpath=None):
             'alpha': [0.0001, 0.001, 0.01, 0.05],
             'learning_rate': ['constant', 'adaptive']
         }
+    elif model_type in rf_types:
+        classifier = RandomForestClassifier()
+        parameter_space = {
+            'n_estimators': [25, 50, 100, 250, 500, 1000],
+            'criterion': ['gini', 'entropy'],
+            'max_features': ['auto', 'log2']
+        }
     else:
         print(f'Cannot create a Classifier with Model Type: {model_type}')
 
-    if classifier and parameter_space:
+    if classifier is not None and parameter_space:
         print(f'\nPerforming Automated Parameter Tuning on {classifier.__class__.__name__} using: \n{parameter_space}')
         # If a Path was provided use it, otherwise use the latest file
         if features_labels_fpath:
@@ -265,13 +281,15 @@ def make_optimised_model(model_type, features_labels_fpath=None):
 
         # Save Model
         s = pickle.dumps(clf)
-        save_name = os.path.join(os.getcwd(), 'Models', f'{clf.__class__.__name__}.pkl')
+        save_name = os.path.join(os.getcwd(), 'Models', f'{clf.__class__.__name__}({classifier.__class__.__name__}).pkl')
         f = open(save_name, 'wb+')
         f.write(s)
         f.close()
         print("Model saved into " + save_name)
 
 def train_model(model):
+    if model is None:
+        return f'Cannot Train Model: {model}'
     print('\n-------------------- TRAINING NEW MODEL --------------------')
     # Get list of all Txt files in Extracted Features directory
     file_list =  glob.glob('Extracted_Features/*')
@@ -299,6 +317,7 @@ def train_model(model):
     f.write(s)
     f.close()
     print("Model saved into " + save_name)
+    return f'{model.__class__.__name__} Model saved into Models Directory'
 
 def unpack_dict(dict, *keys):
     for key in keys:

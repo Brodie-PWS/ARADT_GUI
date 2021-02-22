@@ -27,6 +27,8 @@ dataset_dict = {
     'Training': 'Labels/ASVspoof2017_V2_eval.trl.txt'
     }
 
+valid_models = ['SVM', 'svm', 'KNN', 'knn', 'nn', 'NN', 'mlp', 'MLP', 'RF', 'rf']
+
 def show_frame(frame):
     frame.tkraise()
 
@@ -360,10 +362,8 @@ def plot_graphs(index, sample_fname):
     plt.subplots_adjust(hspace=0.5)
 
 def create_new_model():
-    valid_models = ['SVM', 'svm', 'KNN', 'knn', 'nn', 'NN', 'mlp', 'MLP']
     model_settings = {}
     model_type = None
-    # Prompt for Model Type, C Val and Kernel Type
     model_type = simpledialog.askstring('Input Model Type:', 'Please Specify The Type of Model (SVM, (NN, MLP))')
     if not model_type:
         messagebox.showinfo('No Model Type Specified', 'A Model Type was not specified')
@@ -387,7 +387,7 @@ def create_new_model():
             return
         model_settings['c_val'] = c_val_float
         model_settings['kernel'] = kernel
-    if model_type in valid_models and model_type == 'NN' or 'nn' or 'MLP' or 'mlp':
+    elif model_type in valid_models and model_type == 'NN' or model_type == 'nn' or model_type == 'MLP' or model_type == 'mlp':
         solver_val =  simpledialog.askstring('Input Solver Type', 'Please Specify a Solver Type from [lbfgs, sgd, adam]')
         if not solver_val:
             return
@@ -400,6 +400,13 @@ def create_new_model():
         model_settings['solver_val'] = solver_val
         model_settings['activation_val'] = activation_val
         model_settings['max_iter_val'] = max_iter_val
+    elif model_type in valid_models and model_type == 'rf' or model_type == 'RF':
+        n_estimators_val = simpledialog.askinteger('Input Number of Estimators', 'Please Specify the Number of Estimators (Trees) to use for Random Forest')
+        if not n_estimators_val:
+            n_estimators_val = 100
+        max_depth_val = simpledialog.askinteger('Input Max Depth value', 'Please Specify the Maximum Depth of the Tree. Defaults to None')
+        model_settings['n_estimators_val'] = n_estimators_val
+        model_settings['max_depth_val'] = max_depth_val
 
     classifier = make_model(model_type, model_settings)
     print(f'Successfully Created Classifer:{classifier}')
@@ -407,8 +414,6 @@ def create_new_model():
     return
 
 def create_optimized_model():
-    valid_models = ['SVM', 'svm', 'KNN', 'knn', 'nn', 'NN', 'mlp', 'MLP']
-
     # Prompt for Model Type, C Val and Kernel Type
     model_type = simpledialog.askstring('Input Model Type:', 'Please Specify The Type of Model (SVM, (NN, MLP))')
     if not model_type:
