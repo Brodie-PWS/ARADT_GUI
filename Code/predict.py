@@ -15,7 +15,13 @@ from sklearn import svm
 from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GridSearchCV
+from sklearn.neighbors import KNeighborsClassifier
 from feature_extraction import LinearityDegreeFeatures, HighPowerFrequencyFeatures, extract_lpcc, calc_stft, _stft
+
+svm_types = ['SVM', 'svm']
+mlp_types = ['MLP', 'mlp', 'NN', 'nn']
+rf_types = ['rf', 'RF']
+knn_types = ['knn', 'KNN']
 
 def extract_features(associations_dict):
     # Initialize parameters:
@@ -100,8 +106,6 @@ def store_extracted_features(extracted_features):
     np.save(filename, extracted_features)
 
 def predict_pipeline(model_fpath, chosen_samples):
-    print(model_fpath)
-    print(chosen_samples)
     # Initialize parameters:
     W = 14
     # Peak selection threshold:
@@ -195,9 +199,6 @@ def make_model(model_type, model_params):
     print('\n-------------------- CREATING NEW MODEL --------------------')
     print(f'Model Type: {model_type}\nModel Parameters:{model_params}')
     classifier = None
-    svm_types = ['SVM', 'svm']
-    mlp_types = ['MLP', 'mlp', 'NN', 'nn']
-    rf_types = ['RF', 'rf']
     if model_type in svm_types:
         c_val, kernel = unpack_dict(model_params, 'c_val', 'kernel')
         classifier = svm.SVC(C=c_val, kernel=kernel.lower(), gamma='auto', class_weight=None)
@@ -210,6 +211,10 @@ def make_model(model_type, model_params):
         n_estimators_val, max_depth_val = unpack_dict(model_params, 'n_estimators_val', 'max_depth_val')
         classifier = RandomForestClassifier(n_estimators=n_estimators_val, max_depth=max_depth_val)
         return classifier
+    elif model_type in knn_types:
+        n_neighbors_val, algorithm_val = unpack_dict(model_params, 'n_neighbors_val', 'algorithm_val')
+        classifier = KNeighborsClassifier(n_neighbors=n_neighbors_val, algorithm=algorithm_val)
+        return classifier
     else:
         print(f'Could not create a Model with type: {model_type}')
 
@@ -218,9 +223,6 @@ def make_optimised_model(model_type, features_labels_fpath=None):
     print(f'Model Type: {model_type}')
     classifier = None
     parameter_space = {}
-    svm_types = ['SVM', 'svm']
-    mlp_types = ['MLP', 'mlp', 'NN', 'nn']
-    rf_types = ['rf', 'RF']
     if model_type in svm_types:
         classifier = svm.SVC()
         parameter_space = {
@@ -242,6 +244,13 @@ def make_optimised_model(model_type, features_labels_fpath=None):
             'n_estimators': [25, 50, 100, 250, 500, 1000],
             'criterion': ['gini', 'entropy'],
             'max_features': ['auto', 'log2']
+        }
+    elif model_type in knn_types:
+        classifier = KNeighborsClassifier()
+        parameter_space = {
+            'n_neighbors': [3, 5, 7, 9, 11, 13, 15],
+            'algorithm': ['auto', 'kd_tree', 'ball_tree', 'brute'],
+            'p': [1, 2, 4, 8, 16]
         }
     else:
         print(f'Cannot create a Classifier with Model Type: {model_type}')

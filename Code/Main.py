@@ -364,7 +364,7 @@ def plot_graphs(index, sample_fname):
 def create_new_model():
     model_settings = {}
     model_type = None
-    model_type = simpledialog.askstring('Input Model Type:', 'Please Specify The Type of Model (SVM, (NN, MLP))')
+    model_type = simpledialog.askstring('Input Model Type:', 'Please Specify The Type of Model. Choose from [SVM, MLP, RF, KNN]')
     if not model_type:
         messagebox.showinfo('No Model Type Specified', 'A Model Type was not specified')
         return
@@ -388,14 +388,17 @@ def create_new_model():
         model_settings['c_val'] = c_val_float
         model_settings['kernel'] = kernel
     elif model_type in valid_models and model_type == 'NN' or model_type == 'nn' or model_type == 'MLP' or model_type == 'mlp':
-        solver_val =  simpledialog.askstring('Input Solver Type', 'Please Specify a Solver Type from [lbfgs, sgd, adam]')
+        solver_val = simpledialog.askstring('Input Solver Type', 'Please Specify a Solver Type from [LBFGS, SGD, ADAM], Defaults to LBFGS')
         if not solver_val:
+            solver_val = 'lbfgs'
             return
-        activation_val =  simpledialog.askstring('Input Activation Function Type', 'Please Specify an Activation function from [Identify, Logistic, Tanh, Relu]')
+        activation_val =  simpledialog.askstring('Input Activation Function Type', 'Please Specify an Activation function from [Identify, Logistic, Tanh, Relu], Defaults to Relu')
         if not activation_val:
+            activation_val = 'relu'
             return
-        max_iter_val = simpledialog.askinteger('Input the Number of Iterations', 'Specify the Number of Iterations the Model will do')
+        max_iter_val = simpledialog.askinteger('Input the Number of Iterations', 'Specify the Number of Iterations the Model will perform')
         if not max_iter_val:
+            max_iter_val = 1000
             return
         model_settings['solver_val'] = solver_val
         model_settings['activation_val'] = activation_val
@@ -407,7 +410,17 @@ def create_new_model():
         max_depth_val = simpledialog.askinteger('Input Max Depth value', 'Please Specify the Maximum Depth of the Tree. Defaults to None')
         model_settings['n_estimators_val'] = n_estimators_val
         model_settings['max_depth_val'] = max_depth_val
+    elif model_type in valid_models and model_type == 'knn' or model_type == 'KNN':
+        n_neighbors_val = simpledialog.askinteger('Input Number of Neighbors', 'Please Specify the Number of Neighbors to use for KNN')
+        if not n_neighbors_val:
+            n_neighbors_val = 3
+        algorithm_val = simpledialog.askstring('Input Algorithm Type', 'Please Specify the Algorithm you want to use for KNN. Choose from [Auto, Ball_Tree, KD_Tree, Brute]')
+        if not algorithm_val:
+            algorithm_val = 'auto'
+        model_settings['n_neighbors_val'] = n_neighbors_val
+        model_settings['algorithm_val'] = algorithm_val
 
+    # Pass Model Settings to function in Predict.py
     classifier = make_model(model_type, model_settings)
     print(f'Successfully Created Classifer:{classifier}')
     train_model(classifier)
@@ -415,7 +428,7 @@ def create_new_model():
 
 def create_optimized_model():
     # Prompt for Model Type, C Val and Kernel Type
-    model_type = simpledialog.askstring('Input Model Type:', 'Please Specify The Type of Model (SVM, (NN, MLP))')
+    model_type = simpledialog.askstring('Input Model Type:', 'Please Specify The Type of Model. Choose from [SVM, MLP, RF, KNN]')
     if not model_type:
         messagebox.showinfo('No Model Type Specified', 'A Model Type was not specified')
         return
