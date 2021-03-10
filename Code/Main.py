@@ -372,6 +372,7 @@ def create_new_model():
         messagebox.showinfo('Invalid Type', 'The specified Model Type is not a valid Type')
         return
 
+    # SVM Logic
     if model_type in valid_models and model_type == 'svm' or model_type == 'SVM':
         c_val = simpledialog.askstring('Input C Parameter Value:', 'Please Specify Value of the C Parameter')
         if not c_val:
@@ -380,13 +381,14 @@ def create_new_model():
             try:
                 c_val_float = float(c_val)
             except Exception as ex:
-                print(f'Error when casting User Input [{c_val}] to float value')
+                messagebox.showinfo('Input Error', f'Input: {c_val} invalid.\nPlease Enter an Integer or Float value')
                 return
         kernel = simpledialog.askstring('Input Kernel Type', 'Please Specify a Kernel Type from [RBF, Poly, Linear]')
         if not kernel:
             return
         model_settings['c_val'] = c_val_float
         model_settings['kernel'] = kernel
+    # MLP Logic
     elif model_type in valid_models and model_type == 'NN' or model_type == 'nn' or model_type == 'MLP' or model_type == 'mlp':
         solver_val = simpledialog.askstring('Input Solver Type', 'Please Specify a Solver Type from [LBFGS, SGD, ADAM], Defaults to LBFGS')
         if not solver_val:
@@ -403,6 +405,7 @@ def create_new_model():
         model_settings['solver_val'] = solver_val
         model_settings['activation_val'] = activation_val
         model_settings['max_iter_val'] = max_iter_val
+    # Random Forest Logic
     elif model_type in valid_models and model_type == 'rf' or model_type == 'RF':
         n_estimators_val = simpledialog.askinteger('Input Number of Estimators', 'Please Specify the Number of Estimators (Trees) to use for Random Forest')
         if not n_estimators_val:
@@ -410,6 +413,7 @@ def create_new_model():
         max_depth_val = simpledialog.askinteger('Input Max Depth value', 'Please Specify the Maximum Depth of the Tree. Defaults to None')
         model_settings['n_estimators_val'] = n_estimators_val
         model_settings['max_depth_val'] = max_depth_val
+    # KNN Logic
     elif model_type in valid_models and model_type == 'knn' or model_type == 'KNN':
         n_neighbors_val = simpledialog.askinteger('Input Number of Neighbors', 'Please Specify the Number of Neighbors to use for KNN')
         if not n_neighbors_val:
@@ -493,7 +497,7 @@ def edit_labels_file():
 def create_labels_text_file_template():
     chosen_samples  = filedialog.askopenfilenames(parent=frame1, initialdir='Samples/', title='Select Audio Files')
     # Create a Template based on the selected Samples
-    filename = 'Labels/TestNew.txt'
+    filename = 'Labels/NewLabelFile.txt'
     with open(filename, 'w') as file:
         for sample in chosen_samples:
             sample_fname = os.path.basename(sample)
@@ -560,8 +564,9 @@ def create_association_report_str(associations_dict, missed_labels):
 class TextEditor():
     def __init__(self, window, txt_fpath=None):
         self.window = Toplevel(window)
-        self.window.geometry('600x450')
-        self.window.title('Text Editor')
+        self.window.geometry('600x465')
+        txt_fname = os.path.basename(txt_fpath)
+        self.window.title(f'Text Editor: {txt_fname}')
         self.window.config(bg='#44DDFF')
         self.file_path = txt_fpath
 
@@ -576,30 +581,10 @@ class TextEditor():
                 self.textspace.insert(0.0, file.read() + '\n')
                 file.close()
 
-        # Object was called with a Filepath
-        if self.file_path:
-            Button(self.window, text='Save', command= lambda:self.updatefile(self.file_path)).grid(row=1, column=0)
-        else:
-            Button(self.window, text='Save', command=self.savefile).grid(row=1, column=0)
+        # Adding Buttons
+        Button(self.window, text='Save', command= lambda:self.updatefile(self.file_path)).grid(row=1, column=0)
         Button(self.window, text='Save As', command=self.saveasfile).grid(row=2, column=0)
-
-    def savefile(self):
-        savewindow = Tk()
-        savewindow.geometry('250x40')
-        filecontents = self.textspace.get(0.0, END)
-
-        def writefile():
-            with open(file_name_entry.get() + '.txt', 'w+') as file:
-                file.write(filecontents)
-                file.close()
-                savewindow.destroy()
-            return None
-
-        Label(savewindow, text='File Name').grid(row=0, column=0)
-        file_name_entry = Entry(savewindow, width=40)
-        file_name_entry.grid(row=0, column=0)
-
-        Button(savewindow, text='Save', command=writefile).grid(row=0, column=2)
+        Button(self.window, text='Append More Samples', command=self.appendsamples).grid(row=3, column=0)
 
     def saveasfile(self):
         prefix = 'Labels/'
@@ -621,6 +606,14 @@ class TextEditor():
             file.write(filecontents)
             file.close()
             self.window.destroy()
+
+    def appendsamples(self):
+        chosen_samples  = filedialog.askopenfilenames(parent=frame1, initialdir='Samples/', title='Select Audio Files')
+        for sample in chosen_samples:
+            sample_fname = os.path.basename(sample)
+            str_to_add = f'{sample_fname} Label'
+            self.textspace.insert(END, f'{str_to_add}\n')
+            self.window.lift()
 
 # Class for Creating and Displaying a Custom Popup Message
 class PopUpMsg():
