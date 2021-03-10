@@ -17,6 +17,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.neighbors import KNeighborsClassifier
 from feature_extraction import LinearityDegreeFeatures, HighPowerFrequencyFeatures, extract_lpcc, calc_stft, _stft
+from tkinter import messagebox
 
 svm_types = ['SVM', 'svm']
 mlp_types = ['MLP', 'mlp', 'NN', 'nn']
@@ -296,24 +297,26 @@ def make_optimised_model(model_type, features_labels_fpath=None):
         f.close()
         print("Model saved into " + save_name)
 
-def train_model(model):
+def train_model(model, feature_file):
     if model is None:
         return f'Cannot Train Model: {model}'
     print('\n-------------------- TRAINING NEW MODEL --------------------')
-    # Get list of all Txt files in Extracted Features directory
-    file_list =  glob.glob('Extracted_Features/*')
-    # Determine the latest file
-    try:
-        latest_file = max(file_list, key=os.path.getctime)
-    except Exception as ex:
-        messagebox.showinfo('Error!', 'There are no previous Predictions to show')
-        return
 
-    print(f'Using File [{latest_file}] to Train the Model')
+    # If a Feature File was not specified prior, use the latest one instead
+    if not feature_file:
+        # Get list of all Txt files in Extracted Features directory
+        file_list =  glob.glob('Extracted_Features/*')
+        # Determine the latest file
+        try:
+            feature_file = max(file_list, key=os.path.getctime)
+        except Exception as ex:
+            messagebox.showinfo('Error!', 'There are no previous Predictions to show')
+            return
+
+    print(f'Using File [{feature_file}] to Train the Model')
 
     # Load File
-    extracted_features = np.load(latest_file, allow_pickle=True)
-    #print(f'Extracted_features ({len(extracted_features)}):{extracted_features}')
+    extracted_features = np.load(feature_file, allow_pickle=True)
 
     # Load the Void features and corresponding labels:
     x_train, y_train = np.split(extracted_features, indices_or_sections=(97,), axis=1)
@@ -326,7 +329,8 @@ def train_model(model):
     f.write(s)
     f.close()
     print("Model saved into " + save_name)
-    return f'{model.__class__.__name__} Model saved into Models Directory'
+    messagebox.showinfo('Model Saved!', f'{model.__class__.__name__} Model saved into Models Directory')
+    return
 
 def unpack_dict(dict, *keys):
     for key in keys:

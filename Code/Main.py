@@ -422,8 +422,11 @@ def create_new_model():
 
     # Pass Model Settings to function in Predict.py
     classifier = make_model(model_type, model_settings)
-    print(f'Successfully Created Classifer:{classifier}')
-    train_model(classifier)
+    if classifier is not None:
+        print(f'Successfully Created Classifer:{classifier}')
+        feature_file = None
+        feature_file = filedialog.askopenfilename(parent=frame1, initialdir='Extracted_Features/', title='Select A File Containing Extracted Features')
+        msg = train_model(classifier, feature_file)
     return
 
 def create_optimized_model():
