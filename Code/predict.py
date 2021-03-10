@@ -324,7 +324,8 @@ def train_model(model, feature_file):
 
     # Save Model
     s = pickle.dumps(model)
-    save_name = os.path.join(os.getcwd(), 'Models', f'{model.__class__.__name__}.pkl')
+    current_timestamp = time.strftime("%d-%m(%H%M)")
+    save_name = os.path.join(os.getcwd(), 'Models', f'{model.__class__.__name__}({current_timestamp}).pkl')
     f = open(save_name, 'wb+')
     f.write(s)
     f.close()

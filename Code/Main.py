@@ -457,6 +457,10 @@ def create_dataset():
     associations_dict, missed_labels = get_associations(chosen_samples, labels_txt_path)
     print(f'Associations:{associations_dict}')
     print(f'Missed_labels:{missed_labels}')
+    # If labels could not be found for any of the samples, do not extract features
+    if len(missed_labels) == len(chosen_samples):
+        messagebox.showinfo('No Labels Found', 'No Labels could be found for any of the Samples.\nFeature Extraction is not being carried out')
+        return
 
     # Build the Association Report String to be displayed later
     message = create_association_report_str(associations_dict, missed_labels)
@@ -515,10 +519,10 @@ def get_associations(chosen_samples, labels_txt_path):
         chosen_samples_name_list.append(sample_filename)
         for line in lines:
             if sample_filename in line:
-                if 'spoof' in line:
+                if 'spoof' or 'Spoof' in line:
                     associations_dict[sample] = 0
                     found_list.append(sample_filename)
-                elif 'genuine' in line:
+                elif 'genuine' or 'Genuine' in line:
                     associations_dict[sample] = 1
                     found_list.append(sample_filename)
 
