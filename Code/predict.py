@@ -280,14 +280,14 @@ def make_optimised_model(model_type, features_labels_fpath=None):
         clf = GridSearchCV(classifier, parameter_space, n_jobs=-1, cv=2)
         clf.fit(x_train, y_train.ravel())
 
-        print('\nFinished Automated Tuning')
-        print(f'Best Parameters found: {clf.best_params_}')
-        # All results
-        print('\nSummary of all Parameter Combinations')
+        report_str = '----- FINISHED AUTOMATED PARAMETER TUNING -----\n\n'
+        report_str += f'Best Parameters found: \n{clf.best_params_}\n'
+
+        report_str += '\nSummary of all Parameter Combinations:'
         means = clf.cv_results_['mean_test_score']
         stds = clf.cv_results_['std_test_score']
         for mean, std, params in zip(means, stds, clf.cv_results_['params']):
-            print("%0.3f (+/-%0.03f) for %r" % (mean, std * 2, params))
+            report_str += ("\n%0.3f (+/-%0.03f) with Parameters: %r" % (mean, std * 2, params))
 
         # Save Model
         s = pickle.dumps(clf)
@@ -296,6 +296,7 @@ def make_optimised_model(model_type, features_labels_fpath=None):
         f.write(s)
         f.close()
         print("Model saved into " + save_name)
+        return report_str
 
 def train_model(model, feature_file):
     if model is None:

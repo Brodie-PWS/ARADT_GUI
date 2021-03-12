@@ -444,7 +444,9 @@ def create_optimized_model():
         return
 
     features_labels_fpath = filedialog.askopenfilename(parent=frame1, initialdir='Extracted_Features/', title='Select ')
-    make_optimised_model(model_type, features_labels_fpath)
+    report_str = make_optimised_model(model_type, features_labels_fpath)
+    PopUpMsg(report_str)
+    return
 
 def create_dataset():
     print('\n------------CREATING DATASET------------')
