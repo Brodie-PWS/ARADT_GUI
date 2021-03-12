@@ -73,12 +73,6 @@ class TestMakeModel(unittest.TestCase):
         model = predict.make_model(model_type, model_params)
         self.assertEqual(expected, f'{model}')
 
-    # @mock.patch('predict.make_model')
-    # def test_mock_svm(self, mock_make_model):
-    #     mock_make_model.return_value = '<Model = SVM>'
-    #     model = predict.make_model()
-    #     print(model)
-
     @unpack
     @data(
         {'model_type': 'rf', 'n_estimators_val': 100, 'max_depth_val': None,
@@ -102,6 +96,24 @@ class TestMakeModel(unittest.TestCase):
         model = predict.make_model(model_type, model_params)
         self.assertEqual(expected, f'{model}')
 
+    @unpack
+    @data(
+        {'model_type': 'knn', 'n_neighbors_val': 3, 'algorithm_val': 'auto',
+        'expected': 'KNeighborsClassifier(n_neighbors=3)'},
+        {'model_type': 'knn', 'n_neighbors_val': 3, 'algorithm_val': 'kd_tree',
+        'expected': 'KNeighborsClassifier(algorithm=\'kd_tree\', n_neighbors=3)'},
+        {'model_type': 'knn', 'n_neighbors_val': 3, 'algorithm_val': 'ball_tree',
+        'expected': 'KNeighborsClassifier(algorithm=\'ball_tree\', n_neighbors=3)'},
+        {'model_type': 'knn', 'n_neighbors_val': 3, 'algorithm_val': 'brute',
+        'expected': 'KNeighborsClassifier(algorithm=\'brute\', n_neighbors=3)'},
+    )
+    def test_make_knn(self, model_type, n_neighbors_val, algorithm_val, expected):
+        model_params = {}
+        model_params['n_neighbors_val'] = n_neighbors_val
+        model_params['algorithm_val'] = algorithm_val
+        model = predict.make_model(model_type, model_params)
+        self.assertEqual(expected, f'{model}')
+
 @ddt
 class TestTrainModel(unittest.TestCase):
     @unpack
@@ -121,16 +133,82 @@ class TestTrainModel(unittest.TestCase):
         model_params['kernel'] =  kernel
         model = predict.make_model(model_type, model_params)
 
-        return_str = predict.train_model(model)
+        return_str = predict.train_model(model, test_run=True)
 
         self.assertEqual(expected, return_str)
 
-    # @mock.patch('predict.train_model')
-    # def test_mock_train_svm_model(self, mock_train_model):
-    #     return_str = predict.train_model()
-    #     mock_train_model.return_value = ''
-    #     print(return_str)
-    #     self.assertEqual(expected, return_str, 'message')
+    @unpack
+    @data(
+        {'model_type': 'nn', 'solver_val': 'lbfgs', 'activation_val': 'identity',
+        'max_iter_val': 1000, 'expected': 'MLPClassifier Model saved into Models Directory'},
+        {'model_type': 'NN', 'solver_val': 'lbfgs', 'activation_val': 'identity',
+        'max_iter_val': 1000, 'expected': 'MLPClassifier Model saved into Models Directory'},
+        {'model_type': 'mlp', 'solver_val': 'lbfgs', 'activation_val': 'identity',
+        'max_iter_val': 1000, 'expected': 'MLPClassifier Model saved into Models Directory'},
+        {'model_type': 'MLP', 'solver_val': 'lbfgs', 'activation_val': 'identity',
+        'max_iter_val': 1000, 'expected': 'MLPClassifier Model saved into Models Directory'},
+
+        {'model_type': 'invalid', 'solver_val': 'lbfgs', 'activation_val': 'identity',
+        'max_iter_val': 1000, 'expected': 'Cannot Train Model: None'},
+    )
+    def test_train_nn_model(self, model_type, solver_val, activation_val, max_iter_val, expected):
+        # Create new Model
+        model_params = {}
+        model_params['solver_val'] = solver_val
+        model_params['activation_val'] =  activation_val
+        model_params['max_iter_val'] = max_iter_val
+        model = predict.make_model(model_type, model_params)
+
+        return_str = predict.train_model(model, test_run=True)
+
+        self.assertEqual(expected, return_str)
+
+    @unpack
+    @data(
+        {'model_type': 'rf', 'n_estimators_val': 100, 'max_depth_val': None,
+        'expected': 'RandomForestClassifier Model saved into Models Directory'},
+        {'model_type': 'RF', 'n_estimators_val': 100, 'max_depth_val': None,
+        'expected': 'RandomForestClassifier Model saved into Models Directory'},
+        {'model_type': 'rf', 'n_estimators_val': 50, 'max_depth_val': None,
+        'expected': 'RandomForestClassifier Model saved into Models Directory'},
+        {'model_type': 'RF', 'n_estimators_val': 50, 'max_depth_val': None,
+        'expected': 'RandomForestClassifier Model saved into Models Directory'},
+
+        {'model_type': 'invalid', 'n_estimators_val': 50, 'max_depth_val': None,
+        'expected': 'Cannot Train Model: None'},
+    )
+    def test_train_rf_model(self, model_type, n_estimators_val, max_depth_val, expected):
+        # Create new Model
+        model_params = {}
+        model_params['n_estimators_val'] = n_estimators_val
+        model_params['max_depth_val'] = max_depth_val
+        model = predict.make_model(model_type, model_params)
+
+        return_str = predict.train_model(model, test_run=True)
+
+        self.assertEqual(expected, return_str)
+
+    @unpack
+    @data(
+        {'model_type': 'knn', 'n_neighbors_val': 3, 'algorithm_val': 'auto',
+        'expected': 'KNeighborsClassifier Model saved into Models Directory'},
+        {'model_type': 'knn', 'n_neighbors_val': 3, 'algorithm_val': 'kd_tree',
+        'expected': 'KNeighborsClassifier Model saved into Models Directory'},
+        {'model_type': 'knn', 'n_neighbors_val': 3, 'algorithm_val': 'ball_tree',
+        'expected': 'KNeighborsClassifier Model saved into Models Directory'},
+        {'model_type': 'knn', 'n_neighbors_val': 3, 'algorithm_val': 'brute',
+        'expected': 'KNeighborsClassifier Model saved into Models Directory'},
+    )
+    def test_train_knn_model(self, model_type, n_neighbors_val, algorithm_val, expected):
+        # Create new Model
+        model_params = {}
+        model_params['n_neighbors_val'] = n_neighbors_val
+        model_params['algorithm_val'] = algorithm_val
+        model = predict.make_model(model_type, model_params)
+
+        return_str = predict.train_model(model, test_run=True)
+
+        self.assertEqual(expected, return_str)
 
 @ddt
 class TestPredict(unittest.TestCase):
