@@ -298,7 +298,7 @@ def make_optimised_model(model_type, features_labels_fpath=None):
         print("Model saved into " + save_name)
         return report_str
 
-def train_model(model, feature_file):
+def train_model(model, feature_file=None, test_run=None):
     if model is None:
         return f'Cannot Train Model: {model}'
     print('\n-------------------- TRAINING NEW MODEL --------------------')
@@ -323,16 +323,19 @@ def train_model(model, feature_file):
     x_train, y_train = np.split(extracted_features, indices_or_sections=(97,), axis=1)
     model.fit(x_train, y_train.ravel())
 
-    # Save Model
-    s = pickle.dumps(model)
-    current_timestamp = time.strftime("%d-%m(%H%M)")
-    save_name = os.path.join(os.getcwd(), 'Models', f'{model.__class__.__name__}({current_timestamp}).pkl')
-    f = open(save_name, 'wb+')
-    f.write(s)
-    f.close()
-    print("Model saved into " + save_name)
-    messagebox.showinfo('Model Saved!', f'{model.__class__.__name__} Model saved into Models Directory')
-    return
+    # Save Model if this method has NOT been called from the Unit Tests
+    if not test_run:
+        s = pickle.dumps(model)
+        current_timestamp = time.strftime("%d-%m(%H%M)")
+        save_name = os.path.join(os.getcwd(), 'Models', f'{model.__class__.__name__}({current_timestamp}).pkl')
+        f = open(save_name, 'wb+')
+        f.write(s)
+        f.close()
+        print("Model saved into " + save_name)
+        messagebox.showinfo('Model Saved!', message)
+
+    message = f'{model.__class__.__name__} Model saved into Models Directory'
+    return message
 
 def unpack_dict(dict, *keys):
     for key in keys:
