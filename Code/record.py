@@ -42,4 +42,3 @@ def record_audio(duration):
     waveFile.close()
 
     print(f'Recording Saved To {UNIQUE_OUTPUT_FILENAME}')
-    messagebox.showinfo('Saved!', 'Recording Saved!')

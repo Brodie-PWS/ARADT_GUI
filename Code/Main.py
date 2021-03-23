@@ -109,56 +109,74 @@ def playback_samples():
         play_obj = wav_obj.play()
         play_obj.wait_done()
 
-def record_sample():
-    # Calls to external function in record.py.
-    global duration
-    duration = simpledialog.askinteger(title='Specify Duration', prompt='Specify the Duration of the Recording')
-    if not duration: return
-    progress_bar_start('single')
-    record_audio(duration)
+def handle_record(setting):
+    record_thread = AsyncRecord(setting)
+    record_thread.start()
+    monitor_thread(record_thread)
 
-def record_multiple_samples():
-    # Calls to external function in record.py.
-    global duration
-    amount = simpledialog.askinteger(title='Specify Amount', prompt='Specify Amount of Samples to Record')
-    if not amount: return
-    duration = simpledialog.askinteger(title='Specify Duration', prompt='Specify the Duration of each Recording')
-    if not duration: return
+def monitor_thread(thread):
+    if thread.is_alive():
+        print(f'Checking Thread: {thread.is_alive()}')
+        window.after(100, lambda: monitor_thread(thread))
+    else:
+        print('Recording Thread Finished!')
 
-    for x in range(amount):
-        progress_bar_start('multiple')
-        record_audio(duration)
+class AsyncRecord(threading.Thread):
+    def __init__(self, setting):
+        super().__init__()
+        self.duration = None
+        self.setting = setting
+        self.duration = simpledialog.askinteger(title='Specify Duration', prompt='Specify the Duration of the Recording')
+        if not self.duration:
+            return
 
-def progress_bar_start(setting):
-    global progress_bar, duration
-    # Progress Bar Setup
-    progress_style = ttk.Style()
-    progress_style.theme_use('clam')
-    progress_style.configure('blue.Horizontal.TProgressbar', troughcolour='cyan', bordercolor='cyan', foreground='cyan', background='blue', lightcolor='blue', darkcolor='blue')
-    progress_bar = ttk.Progressbar(window, style='blue.Horizontal.TProgressbar', orient=HORIZONTAL, length=200, mode='determinate')
-    # Position Progress Bar based on which button was pressed
-    if setting == 'single':
-        progress_bar.place(relx=0.5, rely = 0.65, anchor=CENTER)
-    elif setting == 'multiple':
-        progress_bar.place(relx=0.5, rely = 0.70, anchor=CENTER)
+        # Logic for recording multiple samples back to back
+        if self.setting == 'multiple':
+            self.amount = simpledialog.askinteger(title='Specify Amount', prompt='Specify Amount of Samples to Record')
+            if not self.amount:
+                return
+            else:
+                for x in range(self.amount):
+                    #progress_bar_start(self.setting, self.duration)
+                    ProgressBar('determinate', 'multiple', self.duration)
+                    record_audio(self.duration)
+                    if x == self.amount-1:
+                        messagebox.showinfo('Recording Saved!', 'Recording Saved! All Recordings finished')
+                    else:
+                        messagebox.showinfo('Recording Saved!', 'Recording Saved! Press Ok to Start the Next One')
+        else:
+            #progress_bar_start(self.setting, self.duration)
+            ProgressBar('determinate', 'single', self.duration)
+            record_audio(self.duration)
+            messagebox.showinfo('Recording Saved!', 'Recording Saved!')
 
-    progress_finished = False
-    for x in range(duration):
-        # Increment Progress Bar
-        window.after(1000, progress_increment(duration))
-        # Once Progress reaches 100, display feedbback and reset progress bar
-        if progress_bar['value'] == 100:
-            print('Progress Bar Reset')
-            messagebox.showinfo('Recording Finished!', 'Recording has finished, Now Saving, Please Wait...')
-            progress_bar.destroy()
+class ProgressBar():
+    def __init__(self, bar_mode, setting, duration):
+        # Progress Bar Setup
+        progress_style = ttk.Style()
+        progress_style.theme_use('clam')
+        progress_style.configure('blue.Horizontal.TProgressbar', troughcolour='cyan', bordercolor='cyan', foreground='cyan', background='blue', lightcolor='blue', darkcolor='blue')
+        self.progress_bar = ttk.Progressbar(window, style='blue.Horizontal.TProgressbar', orient=HORIZONTAL, length=200, mode='determinate')
+        # Position Progress Bar based on which button was pressed
+        if setting == 'single':
+            self.progress_bar.place(relx=0.5, rely = 0.65, anchor=CENTER)
+        elif setting == 'multiple':
+            self.progress_bar.place(relx=0.5, rely = 0.70, anchor=CENTER)
 
-        window.update_idletasks()
+        for x in range(duration):
+            # Increment Progress Bar
+            window.after(1000, self.increment_progress(duration))
+            # Once Progress reaches 100, display feedbback and reset progress bar
+            if self.progress_bar['value'] == 100:
+                print('Progress Bar Reset')
+                messagebox.showinfo('Recording Finished!', 'Recording has finished, Now Saving, Please Wait...')
+                self.progress_bar.destroy()
+            window.update_idletasks()
 
-def progress_increment(duration):
-    global progress_bar
-    # Determine the increment value based on duration of sample
-    increment_amount = (100/duration)
-    progress_bar['value'] += increment_amount
+    def increment_progress(self, duration):
+        # Determine the increment value based on duration of sample
+        increment_amount = (100/duration)
+        self.progress_bar['value'] += increment_amount
 
 def make_prediction():
     pred_list = []
@@ -735,11 +753,11 @@ delete_samples_button = Button(frame2, fg='#333276', background='#44DDFF', activ
 delete_samples_button.place(relx=0.50, rely = 0.45, anchor=CENTER)
 
 # Record Button when pressed will record 5 seconds of Audio and save it as a WAV file to root directory
-record_one_button = Button(frame2, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Record a Single Sample', padx=10, pady=10, command = record_sample) #lambda:record_audio(1))
+record_one_button = Button(frame2, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Record a Single Sample', padx=10, pady=10, command = lambda: handle_record('single'))
 record_one_button.place(relx=0.50, rely = 0.60, anchor=CENTER)
 
 # When pressed will record multiple Samples back to back
-record_mult_button = Button(frame2, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Record Multiple Samples', padx=10, pady=10, command = record_multiple_samples)
+record_mult_button = Button(frame2, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Record Multiple Samples', padx=10, pady=10, command = lambda: handle_record('multiple'))
 record_mult_button.place(relx=0.50, rely = 0.75, anchor=CENTER)
 
 # When this Button is pressed, the User can specify a number of Audio files, which will then be played back to back sequentially
