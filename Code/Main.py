@@ -32,17 +32,43 @@ valid_models = ['SVM', 'svm', 'KNN', 'knn', 'nn', 'NN', 'mlp', 'MLP', 'RF', 'rf'
 def show_frame(frame):
     frame.tkraise()
 
-def load_samples():
-    global samples
+class SampleLoader():
+    def __init__(self):
+        self.samples = []
+        self.new_paths_list = []
+        self.error_str = ''
+        self.error = False
 
-    # Prompt User to Specify files to load in
-    samples  = filedialog.askopenfilenames(parent=frame1, initialdir='Samples/', title='Select Audio Files')
-    if samples:
-        print('Loaded in the following files: {}'.format(samples))
-        messagebox.showinfo('Samples Loaded!', 'The Selected Samples have been loaded in, click \'Store Samples\' to load them into the GUI Program')
-    else:
-        print('No files were selected')
-        messagebox.showinfo('Samples not Loaded!', 'No Audio Files were specified to be loaded in')
+        self.ask_for_samples()
+        self.load_samples()
+
+    def ask_for_samples(self):
+        self.samples  = filedialog.askopenfilenames(parent=frame1, initialdir='Samples/', title='Select Audio Files')
+        if len(self.samples) > 0:
+            print('Loaded in the following files: {}'.format(self.samples))
+        else:
+            print('No files were selected')
+            messagebox.showinfo('Samples not Loaded!', 'No Audio Files were specified to be loaded in')
+
+    def load_samples(self):
+        for sample in self.samples:
+            try:
+                new_path = shutil.copy(sample, 'Samples/')
+                self.new_paths_list.append(new_path)
+            except Exception as ex:
+                self.error_str += f'{ex}\n'
+                self.error = True
+                pass
+
+        if self.new_paths_list:
+            print('Selected Files have been stored in the Samples Directory')
+            print('New File Paths: {}'.format(self.new_paths_list))
+            messagebox.showinfo('Samples Stored!', f'Samples have been stored under Samples Directory\n\n{self.error_str}')
+            # Clear Buffer of previously selected files
+            self.samples = []
+            return
+        else:
+            messagebox.showinfo('No Samples to Store!', f'There were no samples to store\n\n{self.error_str}')
 
 def load_model():
     global loaded_model
@@ -55,32 +81,6 @@ def load_model():
     else:
         print('No model was selected')
         messagebox.showinfo('Model not Loaded!', 'No Model was Selected')
-
-def store_samples():
-    global samples
-
-    try:
-        if samples:
-            new_paths_list = []
-            for sample in samples:
-                new_path = shutil.copy(sample, 'Samples/')
-                new_paths_list.append(new_path)
-
-            if new_paths_list:
-                print('Selected Files have been stored in the Samples Directory')
-                print('New File Paths: {}'.format(new_paths_list))
-                messagebox.showinfo('Samples Stored!', 'The Selected Samples have been stored under /Samples Directory')
-
-            # Clear Buffer of previously selected files
-            samples = []
-        else:
-            print('There were no loaded samples to store')
-            messagebox.showinfo('Samples not Stored!', 'There were no Audio Files to store. Click \'Load Samples\' to specify files')
-    except Exception as ex:
-        print('Error: {}'.format(ex))
-        print('There were no loaded samples to store')
-        messagebox.showinfo('Samples not Stored!', 'There were no Audio Files to store. Click \'Load Samples\' to specify files')
-        pass
 
 def delete_samples():
     # Prompt User to Specify Samples to be deleted from GUI
@@ -652,7 +652,7 @@ class PopUpMsg():
             popup_canvas = Canvas(self.popup, width=1000, height=1000)
             popup_canvas.pack()
             # Add BG Image to Canvas
-            popup_canvas.create_image(500, 750, image=bg_photo, anchor=CENTER)
+            popup_canvas.create_image(500, 750, image=bg_popup_photo, anchor=CENTER)
             # Display Message
             self.textspace = Text(self.popup, bg='#2f2f6d', fg='white', font=('Candara', 12), pady=10)
             self.textspace.insert(0.0, self.display_str)
@@ -682,7 +682,7 @@ class PopUpMsg():
 
 # Define the Window onject
 window = Tk()
-window.title('VOID GUI')
+window.title('ARADT GUI')
 
 # Define Image
 bg_im = Image.open('Resources/IndexPageImage.png')
@@ -722,31 +722,28 @@ sample_button.place(relx=0.50, rely = 0.40, anchor=CENTER)
 model_management_button = Button(frame1, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Model Management', padx=10, pady=10, command = lambda:show_frame(frame4))
 model_management_button.place(relx=0.50, rely = 0.55, anchor=CENTER)
 
-prediction_button = Button(frame1, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='ENTER THE VOID', padx=10, pady=10, command = lambda:show_frame(frame3))
+prediction_button = Button(frame1, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Attack Detection', padx=10, pady=10, command = lambda:show_frame(frame3))
 prediction_button.place(relx=0.50, rely = 0.70, anchor=CENTER)
 
 # Exit Button
 exit_button = Button(frame1, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Exit the App', padx=10, pady=10, command = window.destroy)
 exit_button.place(relx=0.5, rely=0.9, anchor=CENTER)
 
-frame1_title = Label(frame1, text='VOID GUI: Main Menu', bg='#44DDFF')
+frame1_title = Label(frame1, text='ARADT GUI: Main Menu', bg='#44DDFF')
 frame1_title.pack(fill='x')
 
 # ---------------------------- FRAME 2 CODE-----------------------------------
 # Displaying Background Image
 # Converting to ImageTk type so it can be placed in label
-bg_photo = ImageTk.PhotoImage(bg_im)
+bg_photo = ImageTk.PhotoImage(home_im)
+bg_popup_photo = ImageTk.PhotoImage(bg_im)
 f2_im_label = Label(frame2, image=bg_photo)
 f2_im_label.place(x=0, y=0, relwidth=1, relheight=1)
 
 # Defining Buttons
-# When pressed will prompt the User to specify which Samples to load into the 'samples' list
-load_samples_button = Button(frame2, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Load in Sample/s', padx=10, pady=10, command = load_samples)
-load_samples_button.place(relx=0.50, rely=0.15, anchor=CENTER)
-
-# When pressed will Store the Samples in the 'samples' list into the GUI
-store_samples_button = Button(frame2, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Store Sample/s', padx=10, pady=10, command = store_samples)
-store_samples_button.place(relx=0.50, rely=0.30, anchor=CENTER)
+# When pressed will prompt the user to specify a selection of samples to load into the 'Samples' directory
+load_samples_button = Button(frame2, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Load Sample/s into ARADT', padx=10, pady=10, command = lambda: SampleLoader())
+load_samples_button.place(relx=0.50, rely=0.35, anchor=CENTER)
 
 # When pressed will ask User to specify Samples for deletion
 delete_samples_button = Button(frame2, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Delete Samples', padx=10, pady=10, command = delete_samples)
@@ -758,11 +755,11 @@ record_one_button.place(relx=0.50, rely = 0.60, anchor=CENTER)
 
 # When pressed will record multiple Samples back to back
 record_mult_button = Button(frame2, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Record Multiple Samples', padx=10, pady=10, command = lambda: handle_record('multiple'))
-record_mult_button.place(relx=0.50, rely = 0.75, anchor=CENTER)
+record_mult_button.place(relx=0.50, rely = 0.70, anchor=CENTER)
 
 # When this Button is pressed, the User can specify a number of Audio files, which will then be played back to back sequentially
 playback_samples_button = Button(frame2, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Playback Sample/s', padx=10, pady=10, command = playback_samples)
-playback_samples_button.place(relx=0.50, rely = 0.90, anchor=CENTER)
+playback_samples_button.place(relx=0.50, rely = 0.85, anchor=CENTER)
 
 # When pressed will take User back to the main menu
 main_menu_button = Button(frame2, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Main Menu', padx=10, pady=10, command = lambda:show_frame(frame1))
@@ -795,7 +792,7 @@ verify_predictions_button.place(relx=0.40, rely = 0.75, anchor=CENTER)
 f3_main_menu_button = Button(frame3, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Main Menu', padx=10, pady=10, command = lambda:show_frame(frame1))
 f3_main_menu_button.place(relx=0.50, rely = 0.90, anchor=CENTER)
 
-frame3_title = Label(frame3, text='The VOID', bg='#44DDFF')
+frame3_title = Label(frame3, text='Prediction Screen', bg='#44DDFF')
 frame3_title.pack(fill='x')
 
 # ---------------------------- FRAME 4 CODE-----------------------------------
