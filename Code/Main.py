@@ -137,7 +137,6 @@ class AsyncRecord(threading.Thread):
                 return
             else:
                 for x in range(self.amount):
-                    #progress_bar_start(self.setting, self.duration)
                     ProgressBar('determinate', 'multiple', self.duration)
                     record_audio(self.duration)
                     if x == self.amount-1:
@@ -197,14 +196,23 @@ def make_prediction():
         messagebox.showinfo('Error!', 'Ensure you have selected Samples')
         return
 
+    # Start timer
+    start = time.time()
     global predictions
     predictions = predict_pipeline(chosen_model[0], chosen_samples)
-    formatted_predictions = reformat_predictions(predictions, chosen_model[0])
+    # End timer and determine the elapsed time
+    end = time.time()
+    time_elapsed = (end - start)
+    # Prepare the predictions made by the classifier to be printed
+    formatted_predictions = reformat_predictions(predictions, chosen_model[0], time_elapsed)
     # Store the Predictions in a Txt file under 'Predictions/'
     store_predictions(formatted_predictions)
     PopUpMsg(f'{formatted_predictions}')
 
-def reformat_predictions(predictions, chosen_model):
+def reformat_predictions(predictions, chosen_model, time_elapsed):
+    # Calculate average classification time per sample
+    avg_time = (time_elapsed / len(predictions))
+
     formatted_predictions = '----- PREDICTIONS -----'
     spoof_counter = 0
     genuine_counter = 0
@@ -215,6 +223,8 @@ def reformat_predictions(predictions, chosen_model):
             genuine_counter += 1
         formatted_predictions += '\n' + prediction
     formatted_predictions += f'\n\nGenuine Samples: {genuine_counter}\nSpoof Samples: {spoof_counter}'
+    formatted_predictions += f'\n\nTime Taken to Classify Samples: {time_elapsed:.1f} seconds'
+    formatted_predictions += f'\nAverage Classification Time Per Sample: {avg_time:.1f} seconds'
     formatted_predictions += f'\n\nModel Used: {os.path.basename(chosen_model)}'
     return formatted_predictions
 
@@ -412,7 +422,7 @@ def create_new_model():
         if not solver_val:
             solver_val = 'lbfgs'
             return
-        activation_val =  simpledialog.askstring('Input Activation Function Type', 'Please Specify an Activation function from [Identify, Logistic, Tanh, Relu], Defaults to Relu')
+        activation_val =  simpledialog.askstring('Input Activation Function Type', 'Please Specify an Activation function from [Identity, Logistic, Tanh, Relu], Defaults to Relu')
         if not activation_val:
             activation_val = 'relu'
             return
