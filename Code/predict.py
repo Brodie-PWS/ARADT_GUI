@@ -299,6 +299,7 @@ def make_optimised_model(model_type, features_labels_fpath=None):
         return report_str
 
 def train_model(model, feature_file=None, test_run=None):
+    message = None
     if model is None:
         return f'Cannot Train Model: {model}'
     print('\n-------------------- TRAINING NEW MODEL --------------------')
@@ -310,6 +311,7 @@ def train_model(model, feature_file=None, test_run=None):
         # Determine the latest file
         try:
             feature_file = max(file_list, key=os.path.getctime)
+            messagebox.showinfo('Using latest Extracted Features', f'No file containing Extracted Features was specified\nUsing {feature_file} to train the model')
         except Exception as ex:
             messagebox.showinfo('Error!', 'There are no previous Predictions to show')
             return
@@ -332,7 +334,6 @@ def train_model(model, feature_file=None, test_run=None):
         f.write(s)
         f.close()
         print("Model saved into " + save_name)
-        messagebox.showinfo('Model Saved!', message)
 
     message = f'{model.__class__.__name__} Model saved into Models Directory'
     return message
