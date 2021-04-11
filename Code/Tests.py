@@ -11,19 +11,19 @@ from pathlib import Path
 class TestMakeModel(unittest.TestCase):
     @unpack
     @data(
-        {'model_type': 'svm', 'c_val': 1, 'kernel': 'rbf', 'expected': 'SVC(C=1, gamma=\'auto\')'},
-        {'model_type': 'SVM', 'c_val': 2, 'kernel': 'rbf', 'expected': 'SVC(C=2, gamma=\'auto\')'},
-        {'model_type': 'svm', 'c_val': 1, 'kernel': 'poly', 'expected': 'SVC(C=1, gamma=\'auto\', kernel=\'poly\')'},
-        {'model_type': 'SVM', 'c_val': 2, 'kernel': 'poly', 'expected': 'SVC(C=2, gamma=\'auto\', kernel=\'poly\')'},
-        {'model_type': 'svm', 'c_val': 1, 'kernel': 'linear', 'expected': 'SVC(C=1, gamma=\'auto\', kernel=\'linear\')'},
-        {'model_type': 'SVM', 'c_val': 2, 'kernel': 'linear', 'expected': 'SVC(C=2, gamma=\'auto\', kernel=\'linear\')'},
+        {'model_type': 'svm', 'c_val': 1, 'kernel': 'rbf', 'expected': 'SVC(gamma=\'auto\')'},
+        {'model_type': 'SVM', 'c_val': 2, 'kernel': 'rbf', 'expected': 'SVC(C=2.0, gamma=\'auto\')'},
+        {'model_type': 'svm', 'c_val': 1, 'kernel': 'poly', 'expected': 'SVC(gamma=\'auto\', kernel=\'poly\')'},
+        {'model_type': 'SVM', 'c_val': 2, 'kernel': 'poly', 'expected': 'SVC(C=2.0, gamma=\'auto\', kernel=\'poly\')'},
+        {'model_type': 'svm', 'c_val': 1, 'kernel': 'linear', 'expected': 'SVC(gamma=\'auto\', kernel=\'linear\')'},
+        {'model_type': 'SVM', 'c_val': 2, 'kernel': 'linear', 'expected': 'SVC(C=2.0, gamma=\'auto\', kernel=\'linear\')'},
         {'model_type': 'invalid_model', 'c_val': 1, 'kernel': 'rbf', 'expected': 'None'},
         {'model_type': 'invalid_model', 'c_val': 1, 'kernel': 'linear', 'expected': 'None'},
     )
     def test_make_svm(self, model_type, c_val, kernel, expected):
         model_params = {}
-        model_params['c_val'] = c_val
-        model_params['kernel'] =  kernel
+        model_params['C Parameter'] = c_val
+        model_params['Kernel Type'] =  kernel
         model = predict.make_model(model_type, model_params)
         self.assertEqual(expected, f'{model}')
 
@@ -67,9 +67,9 @@ class TestMakeModel(unittest.TestCase):
     )
     def test_make_nn(self, model_type, solver_val, activation_val, max_iter_val, expected):
         model_params = {}
-        model_params['solver_val'] = solver_val
-        model_params['activation_val'] =  activation_val
-        model_params['max_iter_val'] = max_iter_val
+        model_params['Solver Type'] = solver_val
+        model_params['Activation Function Type'] =  activation_val
+        model_params['Number of Iterations'] = max_iter_val
         model = predict.make_model(model_type, model_params)
         self.assertEqual(expected, f'{model}')
 
@@ -91,8 +91,8 @@ class TestMakeModel(unittest.TestCase):
     )
     def test_make_rf(self, model_type, n_estimators_val, max_depth_val, expected):
         model_params = {}
-        model_params['n_estimators_val'] = n_estimators_val
-        model_params['max_depth_val'] = max_depth_val
+        model_params['Number of Estimators'] = n_estimators_val
+        model_params['Max Depth'] = max_depth_val
         model = predict.make_model(model_type, model_params)
         self.assertEqual(expected, f'{model}')
 
@@ -109,8 +109,8 @@ class TestMakeModel(unittest.TestCase):
     )
     def test_make_knn(self, model_type, n_neighbors_val, algorithm_val, expected):
         model_params = {}
-        model_params['n_neighbors_val'] = n_neighbors_val
-        model_params['algorithm_val'] = algorithm_val
+        model_params['Number of Neighbors'] = n_neighbors_val
+        model_params['Algorithm Type'] = algorithm_val
         model = predict.make_model(model_type, model_params)
         self.assertEqual(expected, f'{model}')
 
@@ -129,8 +129,8 @@ class TestTrainModel(unittest.TestCase):
     def test_train_svm_model(self, model_type, c_val, kernel, expected):
         # Create new Model
         model_params = {}
-        model_params['c_val'] = c_val
-        model_params['kernel'] =  kernel
+        model_params['C Parameter'] = c_val
+        model_params['Kernel Type'] =  kernel
         model = predict.make_model(model_type, model_params)
 
         return_str = predict.train_model(model, test_run=True)
@@ -154,9 +154,9 @@ class TestTrainModel(unittest.TestCase):
     def test_train_nn_model(self, model_type, solver_val, activation_val, max_iter_val, expected):
         # Create new Model
         model_params = {}
-        model_params['solver_val'] = solver_val
-        model_params['activation_val'] =  activation_val
-        model_params['max_iter_val'] = max_iter_val
+        model_params['Solver Type'] = solver_val
+        model_params['Activation Function Type'] =  activation_val
+        model_params['Number of Iterations'] = max_iter_val
         model = predict.make_model(model_type, model_params)
 
         return_str = predict.train_model(model, test_run=True)
@@ -165,13 +165,13 @@ class TestTrainModel(unittest.TestCase):
 
     @unpack
     @data(
-        {'model_type': 'rf', 'n_estimators_val': 100, 'max_depth_val': None,
+        {'model_type': 'rf', 'n_estimators_val': 100, 'max_depth_val': 10,
         'expected': 'RandomForestClassifier Model saved into Models Directory'},
-        {'model_type': 'RF', 'n_estimators_val': 100, 'max_depth_val': None,
+        {'model_type': 'RF', 'n_estimators_val': 100, 'max_depth_val': 10,
         'expected': 'RandomForestClassifier Model saved into Models Directory'},
-        {'model_type': 'rf', 'n_estimators_val': 50, 'max_depth_val': None,
+        {'model_type': 'rf', 'n_estimators_val': 50, 'max_depth_val': 20,
         'expected': 'RandomForestClassifier Model saved into Models Directory'},
-        {'model_type': 'RF', 'n_estimators_val': 50, 'max_depth_val': None,
+        {'model_type': 'RF', 'n_estimators_val': 50, 'max_depth_val': 20,
         'expected': 'RandomForestClassifier Model saved into Models Directory'},
 
         {'model_type': 'invalid', 'n_estimators_val': 50, 'max_depth_val': None,
@@ -180,8 +180,8 @@ class TestTrainModel(unittest.TestCase):
     def test_train_rf_model(self, model_type, n_estimators_val, max_depth_val, expected):
         # Create new Model
         model_params = {}
-        model_params['n_estimators_val'] = n_estimators_val
-        model_params['max_depth_val'] = max_depth_val
+        model_params['Number of Estimators'] = n_estimators_val
+        model_params['Max Depth'] = max_depth_val
         model = predict.make_model(model_type, model_params)
 
         return_str = predict.train_model(model, test_run=True)
@@ -202,8 +202,8 @@ class TestTrainModel(unittest.TestCase):
     def test_train_knn_model(self, model_type, n_neighbors_val, algorithm_val, expected):
         # Create new Model
         model_params = {}
-        model_params['n_neighbors_val'] = n_neighbors_val
-        model_params['algorithm_val'] = algorithm_val
+        model_params['Number of Neighbors'] = n_neighbors_val
+        model_params['Algorithm Type'] = algorithm_val
         model = predict.make_model(model_type, model_params)
 
         return_str = predict.train_model(model, test_run=True)
@@ -225,7 +225,7 @@ class TestPredict(unittest.TestCase):
     {'model_fpath': 'Models/test_model.pkl', 'chosen_samples': ['Samples/E_1000010.wav', 'Samples/E_1000020.wav'],
     'expected': '[\'[E_1000010.wav] is [Genuine] Voice\', \'[E_1000020.wav] is [Spoof] Voice\']'},
     {'model_fpath': 'Models/test_model.pkl', 'chosen_samples': ['Samples/E_1000040.wav', 'Samples/E_1000050.wav'],
-    'expected': '[\'[E_1000040.wav] is [Spoof] Voice\', \'[E_1000050.wav] is [Genuine] Voice\']'},
+    'expected': '[\'[E_1000040.wav] is [Spoof] Voice\', \'[E_1000050.wav] is [Spoof] Voice\']'},
     )
     def test_prediction_pipeline(self, model_fpath, chosen_samples, expected):
         predictions = predict.predict_pipeline(model_fpath, chosen_samples)

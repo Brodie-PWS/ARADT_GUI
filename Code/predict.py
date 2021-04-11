@@ -200,24 +200,25 @@ def make_model(model_type, model_params):
     print('\n-------------------- CREATING NEW MODEL --------------------')
     print(f'Model Type: {model_type}\nModel Parameters:{model_params}')
     classifier = None
-    if model_type in svm_types:
-        c_val, kernel = unpack_dict(model_params, 'c_val', 'kernel')
-        classifier = svm.SVC(C=c_val, kernel=kernel.lower(), gamma='auto', class_weight=None)
+    if model_type.lower() in svm_types:
+        c_val, kernel = unpack_dict(model_params, 'C Parameter', 'Kernel Type')
+        classifier = svm.SVC(C=float(c_val), kernel=kernel.lower(), gamma='auto', class_weight=None)
         return classifier
-    elif model_type in mlp_types:
-        solver_val, activation_val, max_iter_val = unpack_dict(model_params, 'solver_val', 'activation_val', 'max_iter_val')
-        classifier = MLPClassifier(solver=solver_val, activation=activation_val, max_iter=max_iter_val)
+    elif model_type.lower() in mlp_types:
+        solver_val, activation_val, max_iter_val = unpack_dict(model_params, 'Solver Type', 'Activation Function Type', 'Number of Iterations')
+        classifier = MLPClassifier(solver=solver_val.lower(), activation=activation_val.lower(), max_iter=max_iter_val)
         return classifier
-    elif model_type in rf_types:
-        n_estimators_val, max_depth_val = unpack_dict(model_params, 'n_estimators_val', 'max_depth_val')
+    elif model_type.lower() in rf_types:
+        n_estimators_val, max_depth_val = unpack_dict(model_params, 'Number of Estimators', 'Max Depth')
         classifier = RandomForestClassifier(n_estimators=n_estimators_val, max_depth=max_depth_val)
         return classifier
-    elif model_type in knn_types:
-        n_neighbors_val, algorithm_val = unpack_dict(model_params, 'n_neighbors_val', 'algorithm_val')
-        classifier = KNeighborsClassifier(n_neighbors=n_neighbors_val, algorithm=algorithm_val)
+    elif model_type.lower() in knn_types:
+        n_neighbors_val, algorithm_val = unpack_dict(model_params, 'Number of Neighbors', 'Algorithm Type')
+        classifier = KNeighborsClassifier(n_neighbors=n_neighbors_val, algorithm=algorithm_val.lower())
         return classifier
     else:
         print(f'Could not create a Model with type: {model_type}')
+        return classifier
 
 def make_optimised_model(model_type, features_labels_fpath=None):
     print('\n-------------------- CREATING NEW OPTIMIZED MODEL --------------------')
@@ -227,7 +228,7 @@ def make_optimised_model(model_type, features_labels_fpath=None):
     if model_type in svm_types:
         classifier = svm.SVC()
         parameter_space = {
-            'c': [0, 1],
+            'c': [0.05, 0.1, 0.25, 0.5, 1, 1.5, 3, 6, 12, 24, 48],
             'kernel': ['rbf', 'linear', 'poly']
         }
     elif model_type in mlp_types:
@@ -311,7 +312,8 @@ def train_model(model, feature_file=None, test_run=None):
         # Determine the latest file
         try:
             feature_file = max(file_list, key=os.path.getctime)
-            messagebox.showinfo('Using latest Extracted Features', f'No file containing Extracted Features was specified\nUsing {feature_file} to train the model')
+            if not test_run:
+                messagebox.showinfo('Using latest Extracted Features', f'No file containing Extracted Features was specified\nUsing {feature_file} to train the model')
         except Exception as ex:
             messagebox.showinfo('Error!', 'There are no previous Predictions to show')
             return

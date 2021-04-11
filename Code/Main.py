@@ -22,6 +22,22 @@ global samples, loaded_model, popup_displayed
 # Prevents additional windows being created
 popup_displayed = False
 
+# CONSTANTS
+CLASSIFIER_TYPES = ['SVM', 'RF', 'MLP', 'KNN']
+CLASSIFIER_PARAMS = {
+    'SVM': ['C Parameter', 'Kernel Type'],
+    'RF': ['Number of Estimators', 'Max Depth'],
+    'MLP': ['Solver Type', 'Activation Function Type', 'Number of Iterations'],
+    'KNN': ['Number of Neighbors', 'Algorithm Type']
+    }
+# List of parameters which have preset options. Used to build drop down menus for Model Creation Window
+DROP_DOWN_CLASSFIER_PARAMS = ['Kernel Type', 'Solver Type', 'Activation Function Type', 'Algorithm Type']
+# List of Parameters for each Classifier type
+SVM_PARAMS = {'C_Parameter': None, 'Kernel Type': ['RBF', 'Linear', 'Poly']}
+RF_PARAMS = {'Number of Estimators': None, 'Max_Depth': None}
+MLP_PARAMS = {'Solver Type': ['LBFGS', 'SGD', 'ADAM'], 'Activation Function Type': ['Identity', 'Logistic', 'Tanh', 'Relu'], 'Number of Iterations': None}
+KNN_PARAMS = {'Number of Neighbors': None, 'Algorithm Type': ['Auto', 'Ball_Tree', 'KD_Tree', 'Brute']}
+
 DATASET_DICT = {
     'Evaluation': 'Labels/ASVspoof2017_V2_eval.trl.txt',
     'Development': 'Labels/ASVspoof2017_V2_eval.trl.txt',
@@ -293,71 +309,151 @@ class PopUpMsg():
         else:
             return False
 
-def create_new_model():
-    model_settings = {}
-    model_type = None
-    model_type = simpledialog.askstring('Input Model Type:', 'Please Specify The Type of Model. Choose from [SVM, MLP, RF, KNN]')
-    if not model_type:
-        messagebox.showinfo('No Model Type Specified', 'A Model Type was not specified')
-        return
-    elif model_type not in VALID_MODELS:
-        messagebox.showinfo('Invalid Type', 'The specified Model Type is not a valid Type')
-        return
+class ModelCreation():
+    def __init__(self, classifier_types, classifier_params):
+        self.classifier_types = classifier_types
+        self.classifier_params = classifier_params
+        self.widgets = []
+        self.matched_responses = {}
 
-    # SVM Logic
-    if model_type in VALID_MODELS and model_type == 'svm' or model_type == 'SVM':
-        c_val = simpledialog.askstring('Input C Parameter Value:', 'Please Specify Value of the C Parameter')
-        if not c_val:
+        print('-------------------- Model Creation Window Displayed --------------------')
+        self.popup = Toplevel(window)
+        self.popup.title('Popup')
+        self.popup.geometry('200x150')
+        self.popup.config(bg='#2f2f6d')
+        self.popup.state('zoomed')
+
+        self.dropdown_canvas = Canvas(self.popup, width=1000, height=1000)
+        self.dropdown_canvas.pack()
+        # Add BG Image to Canvas
+        self.dropdown_canvas.create_image(500, 750, image=bg_popup_photo, anchor=CENTER)
+
+        self.dropdown_label = Label(self.popup, text='Select a Classifer Type')
+        self.dropdown_canvas.create_window(500, 50, window=self.dropdown_label)
+
+            # Create a Combobox and bind callback function to update the UI widgets when a selection is made
+        self.dropdown = ttk.Combobox(self.popup, values=self.classifier_types)
+        self.dropdown.bind('<<ComboboxSelected>>', self.update_questions)
+        self.dropdown.place(relx=0.50, rely = 0.10, anchor=CENTER)
+
+    # Binded to Classifier Type selection. Called each time a selection is made to
+    def update_questions(self, internal_variable):
+        # Internal_variable is not used in this function, it is passed in the callback
+
+        # Remove Previous Widgets
+        self.clear_widgets()
+
+        # Retrieve selected classifier option from dropdown
+        self.selected_type = self.dropdown.get()
+        # Get the parameters corresponding to the classifier type
+        self.parameter_names = self.classifier_params[self.selected_type]
+
+        # Y_pos used to dynamically position the widgets
+        y_pos = 200
+        # Iterate through the parameters
+        for parameter_name in self.parameter_names:
+            # If the parameter is in DROP_DOWN_CLASSFIER_PARAMS it will be mulitple choice selection
+            if parameter_name in DROP_DOWN_CLASSFIER_PARAMS:
+                # Build label string
+                label_txt = f'Select the {parameter_name}'
+
+                # Retrieve possible choices pertaining to the parameter
+                self.items_for_drop_down = []
+                self.items_for_drop_down += self.get_items_from_list(parameter_name)
+
+                # Create StringVar for holding drop down selection
+                self.dropdown_menu_selection = StringVar()
+                self.dropdown_menu_selection.set(self.items_for_drop_down[0])
+
+                # Create the Label
+                self.label = Label(self.popup, text=label_txt)
+                self.widgets.append(self.label)
+                self.dropdown_canvas.create_window(500, y_pos, window=self.label)
+
+                # Create the Combobox
+                self.dropdown_menu = ttk.Combobox(self.popup, values=self.items_for_drop_down)
+                self.widgets.append(self.dropdown_menu)
+                self.dropdown_canvas.create_window(500, y_pos+25, window=self.dropdown_menu)
+
+                y_pos += 100
+            else:
+                # Create the Label
+                label_txt = f'Input the {parameter_name}'
+                self.label = Label(self.popup, text=label_txt)
+                self.dropdown_canvas.create_window(500, y_pos, window=self.label)
+                self.widgets.append(self.label)
+
+                # Create the Input Box
+                self.entry = Entry(self.popup)
+                self.dropdown_canvas.create_window(500, y_pos+25, window=self.entry)
+                self.widgets.append(self.entry)
+                y_pos += 100
+
+        # Display OK Button
+        self.ok_button = Button(self.popup, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 12, 'bold italic'), activeforeground='white', text='Train Classifier', padx=2, pady=2, command = self.get_responses)
+        self.ok_button.place(relx=0.50, rely = 0.70, anchor=CENTER)
+
+    def get_responses(self):
+        self.responses_dict = {}
+        index = 0
+        for widget in self.widgets:
+            # Ignore Label Widgets
+            if isinstance(widget, Label):
+                continue
+            else:
+                response = ''
+                # Get the current value from the widget
+                response = widget.get()
+                if response:
+                    if response.isnumeric():
+                        response = int(response)
+                    # Assign it to the responses dict
+                    self.responses_dict[index] = response
+                else:
+                    print('Could not get response from Entry box')
+                index += 1
+
+        # Iterate through responses_dict, using the key to match it with the parameter
+        for key, value in self.responses_dict.items():
+            parameter = self.parameter_names[key]
+            self.matched_responses[parameter] = value
+
+        print(f'Responses retrieved from form:{self.matched_responses}')
+        self.close_popup()
+
+    def get_items_from_list(self, parameter_name):
+        # Build the Global Name using selected option from OptionMenu
+        glob_name = f'{self.selected_type}_PARAMS'
+        # Retrieve the parameter set from Globals
+        try:
+            params = globals()[glob_name]
+        except Exception as ex:
+            print('Error: Could not find {} in Globals')
             return
-        else:
-            try:
-                c_val_float = float(c_val)
-            except Exception as ex:
-                messagebox.showinfo('Input Error', f'Input: {c_val} invalid.\nPlease Enter an Integer or Float value')
-                return
-        kernel = simpledialog.askstring('Input Kernel Type', 'Please Specify a Kernel Type from [RBF, Poly, Linear]')
-        if not kernel:
-            return
-        model_settings['c_val'] = c_val_float
-        model_settings['kernel'] = kernel
-    # MLP Logic
-    elif model_type in VALID_MODELS and model_type == 'NN' or model_type == 'nn' or model_type == 'MLP' or model_type == 'mlp':
-        solver_val = simpledialog.askstring('Input Solver Type', 'Please Specify a Solver Type from [LBFGS, SGD, ADAM], Defaults to LBFGS')
-        if not solver_val:
-            solver_val = 'lbfgs'
-            return
-        activation_val =  simpledialog.askstring('Input Activation Function Type', 'Please Specify an Activation function from [Identity, Logistic, Tanh, Relu], Defaults to Relu')
-        if not activation_val:
-            activation_val = 'relu'
-            return
-        max_iter_val = simpledialog.askinteger('Input the Number of Iterations', 'Specify the Number of Iterations the Model will perform')
-        if not max_iter_val:
-            max_iter_val = 1000
-            return
-        model_settings['solver_val'] = solver_val
-        model_settings['activation_val'] = activation_val
-        model_settings['max_iter_val'] = max_iter_val
-    # Random Forest Logic
-    elif model_type in VALID_MODELS and model_type == 'rf' or model_type == 'RF':
-        n_estimators_val = simpledialog.askinteger('Input Number of Estimators', 'Please Specify the Number of Estimators (Trees) to use for Random Forest')
-        if not n_estimators_val:
-            n_estimators_val = 100
-        max_depth_val = simpledialog.askinteger('Input Max Depth value', 'Please Specify the Maximum Depth of the Tree. Defaults to None')
-        model_settings['n_estimators_val'] = n_estimators_val
-        model_settings['max_depth_val'] = max_depth_val
-    # KNN Logic
-    elif model_type in VALID_MODELS and model_type == 'knn' or model_type == 'KNN':
-        n_neighbors_val = simpledialog.askinteger('Input Number of Neighbors', 'Please Specify the Number of Neighbors to use for KNN')
-        if not n_neighbors_val:
-            n_neighbors_val = 3
-        algorithm_val = simpledialog.askstring('Input Algorithm Type', 'Please Specify the Algorithm you want to use for KNN. Choose from [Auto, Ball_Tree, KD_Tree, Brute]')
-        if not algorithm_val:
-            algorithm_val = 'auto'
-        model_settings['n_neighbors_val'] = n_neighbors_val
-        model_settings['algorithm_val'] = algorithm_val
+        # Take the set of options for the parameter from the dictionary
+        retrieved_options = params[parameter_name]
+        return retrieved_options
+
+    def clear_widgets(self):
+        for widget in self.widgets:
+            widget.destroy()
+        self.widgets = []
+
+    def close_popup(self):
+        self.popup.destroy()
+
+def create_new_model(options, add):
+    # Display Model Creation Popup
+    model_creation_menu = ModelCreation(options, add)
+    # Wait for Model Creation Menu to close (UI finished) before continuing
+    window.wait_window(model_creation_menu.popup)
+    # Once Window has closed, retrieve the Model Type and Settings from ModelCreation object
+    model_parameters = model_creation_menu.matched_responses
+    model_type = model_creation_menu.selected_type
+    print(f'Model Type: {model_type}\nModel Settings: {model_parameters}')
 
     # Pass Model Settings to function in Predict.py to create the classifier
-    classifier = make_model(model_type, model_settings)
+    classifier = make_model(model_type, model_parameters)
     if classifier is not None:
         print(f'Successfully Created Classifer:{classifier}')
         feature_file = None
@@ -367,7 +463,6 @@ def create_new_model():
         msg = train_model(classifier, feature_file)
         if msg:
             messagebox.showinfo('Model Trained and Saved Successfully', msg)
-    return
 
 def create_optimized_model():
     # Prompt for Model Type, C Val and Kernel Type
@@ -386,19 +481,30 @@ def create_optimized_model():
 
 def create_dataset():
     print('\n------------CREATING DATASET------------')
-    chosen_samples  = filedialog.askopenfilenames(parent=frame1, initialdir='Samples/', title='Select Audio Files')
+    building_dataset = True
+
+    chosen_samples = filedialog.askopenfilenames(parent=frame1, initialdir='Samples/', title='Select Audio Files')
     if not chosen_samples:
         messagebox.showinfo('No Files Selected!', 'Ensure you have selected Audio Files')
-        return
-    labels_txt_path = filedialog.askopenfilename(parent=frame1, initialdir='Labels/', title='Select A Text File Containing Labels')
+
+    while building_dataset:
+        res = messagebox.askquestion('Add more?', 'Do you want to specify more samples to add to the dataset?')
+        if res == 'yes':
+            additional_samples = filedialog.askopenfilenames(parent=frame1, initialdir='Samples/', title='Select Audio Files')
+            if additional_samples:
+                chosen_samples += additional_samples
+        else:
+            building_dataset = False
+            break
+
+    labels_txt_path = filedialog.askopenfilenames(parent=frame1, initialdir='Labels/', title='Select A Text File Containing Labels')
     if not labels_txt_path:
-        messagebox.showinfo('No Labels File Selected!', 'Ensure you have selected a Labels Text file')
+        messagebox.showinfo('No Labels File/s Selected!', 'Ensure you have selected file/s containing labels')
         return
 
     # Create Associations between Samples and Labels
     associations_dict, missed_labels = get_associations(chosen_samples, labels_txt_path)
     print(f'Associations:{associations_dict}')
-    print(f'Missed_labels:{missed_labels}')
     # If labels could not be found for any of the samples, do not extract features
     if len(missed_labels) == len(chosen_samples):
         messagebox.showinfo('No Labels Found', 'No Labels could be found for any of the Samples.\nFeature Extraction is not being carried out')
@@ -446,11 +552,13 @@ def create_labels_text_file_template():
 
 def get_associations(chosen_samples, labels_txt_path):
     associations_dict = {}
-    print(f'Chosen_samples:{chosen_samples}\nlabels_txt_path:{labels_txt_path}')
+    print(f'Chosen Samples:{chosen_samples}\nChosen Labels file/s:{labels_txt_path}')
 
-    # Load labels text file and read lines into variable:
-    with open(labels_txt_path, 'r') as f:
-        lines = f.read().splitlines()
+    # Load labels text files and read lines into variable:
+    lines = []
+    for path in labels_txt_path:
+        with open(path, 'r') as f:
+            lines.extend(f.read().splitlines())
 
     found_list = []
     chosen_samples_name_list = []
@@ -461,10 +569,11 @@ def get_associations(chosen_samples, labels_txt_path):
         chosen_samples_name_list.append(sample_filename)
         for line in lines:
             if sample_filename in line:
-                if 'spoof' or 'Spoof' in line:
+                print(f'Line:{line}')
+                if 'spoof' in line:
                     associations_dict[sample] = 0
                     found_list.append(sample_filename)
-                elif 'genuine' or 'Genuine' in line:
+                elif 'live' in line:
                     associations_dict[sample] = 1
                     found_list.append(sample_filename)
 
@@ -854,7 +963,7 @@ if __name__ == '__main__':
     create_dataset_button.place(relx=0.5, rely=0.60, anchor=CENTER)
 
     # When pressed, user will be asked to specify the parameters of the classifier and the extracted features with which to train it
-    create_model_button = Button(frame4, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Create New Model', padx=10, pady=10, command = create_new_model)
+    create_model_button = Button(frame4, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Create New Model', padx=10, pady=10, command = lambda: create_new_model(CLASSIFIER_TYPES, CLASSIFIER_PARAMS))
     create_model_button.place(relx=0.5, rely=0.75, anchor=CENTER)
 
     # When pressed, user will be asked to specify the classifier type they want to create
