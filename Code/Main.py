@@ -331,7 +331,11 @@ class ModelCreation():
         self.dropdown_label = Label(self.popup, text='Select a Classifer Type')
         self.dropdown_canvas.create_window(500, 50, window=self.dropdown_label)
 
-            # Create a Combobox and bind callback function to update the UI widgets when a selection is made
+        # Display Exit Button
+        self.exit_button = Button(self.popup, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 12, 'bold italic'), activeforeground='white', text='Exit Model Creation', padx=2, pady=2, command = self.close_popup)
+        self.exit_button.place(relx=0.50, rely = 0.75, anchor=CENTER)
+
+        # Create a Combobox and bind callback function to update the UI widgets when a selection is made
         self.dropdown = ttk.Combobox(self.popup, values=self.classifier_types)
         self.dropdown.bind('<<ComboboxSelected>>', self.update_questions)
         self.dropdown.place(relx=0.50, rely = 0.10, anchor=CENTER)
@@ -395,6 +399,7 @@ class ModelCreation():
 
     def get_responses(self):
         self.responses_dict = {}
+        response_missed = False
         index = 0
         for widget in self.widgets:
             # Ignore Label Widgets
@@ -411,7 +416,13 @@ class ModelCreation():
                     self.responses_dict[index] = response
                 else:
                     print('Could not get response from Entry box')
+                    response_missed = True
                 index += 1
+
+        if response_missed:
+            messagebox.showinfo('Error with Classifier Parameters', 'Ensure all parameters are specified!')
+            self.popup.lift()
+            return
 
         # Iterate through responses_dict, using the key to match it with the parameter
         for key, value in self.responses_dict.items():
@@ -442,13 +453,16 @@ class ModelCreation():
     def close_popup(self):
         self.popup.destroy()
 
-def create_new_model(options, add):
+def create_new_model(classifier_types, classifier_params):
     # Display Model Creation Popup
-    model_creation_menu = ModelCreation(options, add)
+    model_creation_menu = ModelCreation(classifier_types, classifier_params)
     # Wait for Model Creation Menu to close (UI finished) before continuing
     window.wait_window(model_creation_menu.popup)
     # Once Window has closed, retrieve the Model Type and Settings from ModelCreation object
     model_parameters = model_creation_menu.matched_responses
+    if not model_parameters:
+        # Exit if there are no parameters
+        return
     model_type = model_creation_menu.selected_type
     print(f'Model Type: {model_type}\nModel Settings: {model_parameters}')
 
@@ -573,7 +587,7 @@ def get_associations(chosen_samples, labels_txt_path):
                 if 'spoof' in line:
                     associations_dict[sample] = 0
                     found_list.append(sample_filename)
-                elif 'live' in line:
+                elif 'genuine' in line:
                     associations_dict[sample] = 1
                     found_list.append(sample_filename)
 
@@ -718,6 +732,19 @@ def verify_predictions():
     FP = 0
     FN = 0
     if 'predictions' in globals():
+        labels_txt_paths = filedialog.askopenfilenames(parent=frame1, initialdir='Labels/', title='Select A Text File Containing Labels')
+        if not labels_txt_paths:
+            messagebox.showinfo('No Labels File/s Selected!', 'Ensure you have selected file/s containing labels')
+            return
+
+        # Load labels text files and read all lines into a variable:
+        label_lines = []
+        for path in labels_txt_paths:
+            with open(path, 'r') as f:
+                label_lines.extend(f.read().splitlines())
+
+        # This set holds all of the sample names which labels could not be found for
+        missed_matches = set()
         for prediction in predictions:
             # Extract Matching Strings from Predictions, Pulls out Filename and Classification
             sample_format = re.findall('[A-Z]\w+', prediction)
@@ -725,29 +752,15 @@ def verify_predictions():
             sample_name = sample_format[0]
             sample_predicted_label = sample_format[1]
 
-            # Based on the starting letter, determine which Dataset Text file should be loaded
-            if sample_name.startswith('E_'):
-                dataset_path = DATASET_DICT.get('Evaluation')
-            elif sample_name.startswith('T_'):
-                dataset_path = DATASET_DICT.get('Training')
-            elif sample_name.startswith('D_'):
-                dataset_path = DATASET_DICT.get('Development')
-            else:
-                print(f'No Label could be found for Sample: {sample_name}. Continuing...')
-                continue
-            print(f'Dataset Path = {dataset_path}\n')
-
-            if dataset_path:
-                labels_txt_path = open(dataset_path, 'r')
-                lines = labels_txt_path.readlines()
-                # Look for the line corresponding to sample and retrieve actual label
-                for line in lines:
-                    if sample_name in line:
-                        if 'spoof' in line:
-                            actual_label = 'Spoof'
-                        elif 'genuine' in line:
-                            actual_label = 'Genuine'
-                        print(f'Found Match in line: \n{line}')
+            actual_label = None
+            # Look for the line corresponding to sample and retrieve its actual label
+            for line in label_lines:
+                if sample_name in line:
+                    if 'spoof' in line:
+                        actual_label = 'Spoof'
+                    elif 'genuine' in line:
+                        actual_label = 'Genuine'
+                    print(f'Found Match in line: \n{line}')
 
             print(f'What the Sample was Predicted to be: {sample_predicted_label}')
             print(f'What the Sample actually is: {actual_label}\n')
@@ -762,6 +775,9 @@ def verify_predictions():
                     TN += 1
                 else:
                     FP += 1
+            elif actual_label is None:
+                print(f'Could not find a label for {sample_name}')
+                missed_matches.add(sample_name)
 
         try:
             ACCURACY = (TP + TN) / (TP + TN + FP + FN)
@@ -769,7 +785,18 @@ def verify_predictions():
         except Exception as ex:
             PopUpMsg('No labels could be found for selected Sample/s. Therefore the Predictions could not be verified')
             return
-        PopUpMsg(f'\nOverall Accuracy: {ACCURACY}\nFAR:{FAR}\n\nTP:{TP}\nTN:{TN}\nFP:{FP}\nFN:{FN}')
+
+        # Create the message to be displayed
+        message_str = f'\nOverall Accuracy: {ACCURACY}\nFAR:{FAR}\n\nTP:{TP}\nTN:{TN}\nFP:{FP}\nFN:{FN}'
+
+        # If there samples that labels could not be found for, amend the message to reflect this
+        if len(missed_matches) > 0:
+            message_str += f'\n\nCould not find labels for the following samples:'
+            for sample_name in sorted(missed_matches):
+                message_str += f'\n{sample_name}'
+            message_str += '\n\nThese samples have not been considered when calculating the performance metrics'
+
+        PopUpMsg(f'{message_str}')
     else:
         messagebox.showinfo('No Predictions to Verify', 'There are no previous predictions to verify')
 
@@ -921,25 +948,25 @@ if __name__ == '__main__':
 
     # When pressed user will be prompted to select a model and samples to make predictions on
     make_prediction_button = Button(frame3, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Make A Prediction', padx=10, pady=10, command = make_prediction)
-    make_prediction_button.place(relx=0.50, rely = 0.40, anchor=CENTER)
-
-    # When pressed user will be prompted to select a text file containing predictions for viewing
-    browse_predictions_button = Button(frame3, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='View Previous Predictions', padx=10, pady=10, command = browse_predictions)
-    browse_predictions_button.place(relx=0.50, rely = 0.60, anchor=CENTER)
-
-    # When pressed will display the previous predictions made by ARADT to the user
-    show_last_predictions_button = Button(frame3, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Show Last Prediction/s', padx=10, pady=10, command = show_last_predictions)
-    show_last_predictions_button.place(relx=0.60, rely = 0.70, anchor=CENTER)
+    make_prediction_button.place(relx=0.50, rely = 0.35, anchor=CENTER)
 
     # When pressed the previous set of predictions will be evaluated and feedback will be displayed to user
     verify_predictions_button = Button(frame3, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Verify Last Prediction/s', padx=10, pady=10, command = verify_predictions)
-    verify_predictions_button.place(relx=0.40, rely = 0.70, anchor=CENTER)
+    verify_predictions_button.place(relx=0.50, rely = 0.55, anchor=CENTER)
+
+    # When pressed will display the previous predictions made by ARADT to the user
+    show_last_predictions_button = Button(frame3, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Show Last Prediction/s', padx=10, pady=10, command = show_last_predictions)
+    show_last_predictions_button.place(relx=0.50, rely = 0.65, anchor=CENTER)
+
+    # When pressed user will be prompted to select a text file containing predictions for viewing
+    browse_predictions_button = Button(frame3, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='View Previous Predictions', padx=10, pady=10, command = browse_predictions)
+    browse_predictions_button.place(relx=0.50, rely = 0.75, anchor=CENTER)
 
     # Takes user to Main Menu
     f3_main_menu_button = Button(frame3, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Main Menu', padx=10, pady=10, command = lambda:show_frame(frame1))
     f3_main_menu_button.place(relx=0.50, rely = 0.90, anchor=CENTER)
 
-    frame3_title = Label(frame3, text='Prediction Screen', bg='#44DDFF')
+    frame3_title = Label(frame3, text='Attack Detection', bg='#44DDFF')
     frame3_title.pack(fill='x')
 
     # ---------------------------- FRAME 4 CODE-----------------------------------

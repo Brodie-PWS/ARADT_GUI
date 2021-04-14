@@ -19,10 +19,10 @@ from sklearn.neighbors import KNeighborsClassifier
 from feature_extraction import LinearityDegreeFeatures, HighPowerFrequencyFeatures, extract_lpcc, calc_stft, _stft
 from tkinter import messagebox
 
-svm_types = ['SVM', 'svm']
-mlp_types = ['MLP', 'mlp', 'NN', 'nn']
-rf_types = ['rf', 'RF']
-knn_types = ['knn', 'KNN']
+SVM_TYPES = ['SVM', 'svm']
+MLP_TYPES = ['MLP', 'mlp', 'NN', 'nn']
+RF_TYPES = ['rf', 'RF']
+KNN_TYPES = ['knn', 'KNN']
 
 def extract_features(associations_dict):
     # Initialize parameters:
@@ -200,19 +200,19 @@ def make_model(model_type, model_params):
     print('\n-------------------- CREATING NEW MODEL --------------------')
     print(f'Model Type: {model_type}\nModel Parameters:{model_params}')
     classifier = None
-    if model_type.lower() in svm_types:
+    if model_type.lower() in SVM_TYPES:
         c_val, kernel = unpack_dict(model_params, 'C Parameter', 'Kernel Type')
         classifier = svm.SVC(C=float(c_val), kernel=kernel.lower(), gamma='auto', class_weight=None)
         return classifier
-    elif model_type.lower() in mlp_types:
+    elif model_type.lower() in MLP_TYPES:
         solver_val, activation_val, max_iter_val = unpack_dict(model_params, 'Solver Type', 'Activation Function Type', 'Number of Iterations')
         classifier = MLPClassifier(solver=solver_val.lower(), activation=activation_val.lower(), max_iter=max_iter_val)
         return classifier
-    elif model_type.lower() in rf_types:
+    elif model_type.lower() in RF_TYPES:
         n_estimators_val, max_depth_val = unpack_dict(model_params, 'Number of Estimators', 'Max Depth')
         classifier = RandomForestClassifier(n_estimators=n_estimators_val, max_depth=max_depth_val)
         return classifier
-    elif model_type.lower() in knn_types:
+    elif model_type.lower() in KNN_TYPES:
         n_neighbors_val, algorithm_val = unpack_dict(model_params, 'Number of Neighbors', 'Algorithm Type')
         classifier = KNeighborsClassifier(n_neighbors=n_neighbors_val, algorithm=algorithm_val.lower())
         return classifier
@@ -225,13 +225,13 @@ def make_optimised_model(model_type, features_labels_fpath=None):
     print(f'Model Type: {model_type}')
     classifier = None
     parameter_space = {}
-    if model_type in svm_types:
+    if model_type in SVM_TYPES:
         classifier = svm.SVC()
         parameter_space = {
-            'c': [0.05, 0.1, 0.25, 0.5, 1, 1.5, 3, 6, 12, 24, 48],
+            'C': [0.05, 0.1, 0.25, 0.5, 1.0, 1.5, 3, 6.0, 12.0, 24.0, 48.0],
             'kernel': ['rbf', 'linear', 'poly']
         }
-    elif model_type in mlp_types:
+    elif model_type in MLP_TYPES:
         classifier = MLPClassifier(max_iter=10000)
         parameter_space = {
             'hidden_layer_sizes': [(25,25,25), (50,50,50), (50, 100, 50), (100,)],
@@ -240,14 +240,14 @@ def make_optimised_model(model_type, features_labels_fpath=None):
             'alpha': [0.0001, 0.001, 0.01, 0.05],
             'learning_rate': ['constant', 'adaptive']
         }
-    elif model_type in rf_types:
+    elif model_type in RF_TYPES:
         classifier = RandomForestClassifier()
         parameter_space = {
             'n_estimators': [25, 50, 100, 250, 500, 1000],
             'criterion': ['gini', 'entropy'],
             'max_features': ['auto', 'log2']
         }
-    elif model_type in knn_types:
+    elif model_type in KNN_TYPES:
         classifier = KNeighborsClassifier()
         parameter_space = {
             'n_neighbors': [3, 5, 7, 9, 11, 13, 15],
