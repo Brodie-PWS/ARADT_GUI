@@ -16,7 +16,7 @@ import glob
 import librosa
 import librosa.display
 
-global samples, loaded_model, popup_displayed
+global samples, popup_displayed
 
 # Flag which indicates whether or not an instance of a Popup is active
 # Prevents additional windows being created
@@ -64,11 +64,9 @@ class SampleLoader():
 
     def ask_for_samples(self):
         self.samples  = filedialog.askopenfilenames(parent=frame1, initialdir='Samples/', title='Select Audio Files')
-        if len(self.samples) > 0:
+        if self.samples:
             print('Loaded in the following files: {}'.format(self.samples))
         else:
-            print('No files were selected')
-            messagebox.showinfo('Samples not Loaded!', 'No Audio Files were specified to be loaded in')
             return
 
     def load_samples(self):
@@ -154,18 +152,6 @@ def monitor_thread(thread):
     else:
         print('Recording Thread Finished!')
 
-def load_model():
-    global loaded_model
-
-    # Prompt User to Specify files to load in
-    loaded_model  = filedialog.askopenfilename(parent=frame3, initialdir='Models/', title='Select A Model To Use For Predictions')
-    if loaded_model:
-        print('Loaded the following model: {}'.format(loaded_model))
-        messagebox.showinfo('Model Loaded!', 'The Selected Model has been loaded in, you can now ask VOID to make a prediction')
-    else:
-        print('No model was selected')
-        messagebox.showinfo('Model not Loaded!', 'No Model was Selected')
-
 def delete_samples():
     # Prompt User to Specify Samples to be deleted from GUI
     del_samples  = filedialog.askopenfilenames(parent=frame1, initialdir='Samples/', title='Select Audio Files')
@@ -181,8 +167,7 @@ def delete_samples():
         else:
             messagebox.showinfo('Samples not deleted!', 'The selected Samples were not deleted')
     else:
-        print('No files were selected')
-        messagebox.showinfo('No files selected', 'No files were selected for deletion')
+        return
 
 def playback_samples():
     # Prompt User to Specify files to load in
@@ -244,6 +229,7 @@ class TextEditor():
             with open(prefix + save_name + '.txt', 'w+') as file:
                 file.write(filecontents)
                 file.close()
+                messagebox.showinfo(f'File Saved Successfully!', f'The file was saved as: {save_name}.txt into the Labels directory')
         else:
             print('No name was specified, file was not saved!')
             return
@@ -482,7 +468,6 @@ def create_optimized_model():
     # Prompt for Model Type, C Val and Kernel Type
     model_type = simpledialog.askstring('Input Model Type:', 'Please Specify The Type of Model. Choose from [SVM, MLP, RF, KNN]')
     if not model_type:
-        messagebox.showinfo('No Model Type Specified', 'A Model Type was not specified')
         return
     elif model_type not in VALID_MODELS:
         messagebox.showinfo('Invalid Type', 'The specified Model Type is not a valid Type')
@@ -499,7 +484,7 @@ def create_dataset():
 
     chosen_samples = filedialog.askopenfilenames(parent=frame1, initialdir='Samples/', title='Select Audio Files')
     if not chosen_samples:
-        messagebox.showinfo('No Files Selected!', 'Ensure you have selected Audio Files')
+        return
 
     while building_dataset:
         res = messagebox.askquestion('Add more?', 'Do you want to specify more samples to add to the dataset?')
@@ -537,23 +522,20 @@ def create_dataset():
     print('----------------------------------------')
     return
 
-def make_labels_file():
-    print('Creating Labels Text File')
-    filepath = create_labels_text_file_template()
-    TextEditor(window, filepath)
-    return
-
 def edit_labels_file():
     print('Editing Labels Text File')
     filepath = filedialog.askopenfilename(parent=frame1, initialdir='Labels/', title='Select A Text File To Edit')
     if not filepath:
-        messagebox.showinfo('No File Selected!', 'Ensure you have selected a Text file to Edit')
         return
     TextEditor(window, filepath)
     return
 
-def create_labels_text_file_template():
+def create_labels_file():
+    print('Creating Labels Text File')
     chosen_samples  = filedialog.askopenfilenames(parent=frame1, initialdir='Samples/', title='Select Audio Files')
+    if not chosen_samples:
+        return
+
     # Create a Template based on the selected Samples
     filename = 'Labels/NewLabelFile.txt'
     with open(filename, 'w') as file:
@@ -561,8 +543,8 @@ def create_labels_text_file_template():
             sample_fname = os.path.basename(sample)
             file.write(f'{sample_fname} Label\n')
 
-    print('Created Template Text File based on the selected Samples')
-    return filename
+    TextEditor(window, filename)#
+    return
 
 def get_associations(chosen_samples, labels_txt_path):
     associations_dict = {}
@@ -673,7 +655,7 @@ def reformat_predictions(predictions, chosen_model, time_elapsed):
         formatted_predictions += '\n' + prediction
     formatted_predictions += f'\n\nGenuine Samples: {genuine_counter}\nSpoof Samples: {spoof_counter}'
     formatted_predictions += f'\n\nTime Taken to Classify Samples: {time_elapsed:.1f} seconds'
-    formatted_predictions += f'\nAverage Classification Time Per Sample: {avg_time:.1f} seconds'
+    formatted_predictions += f'\nAverage Classification Time Per Sample: {avg_time:.2f} seconds'
     formatted_predictions += f'\n\nModel Used: {os.path.basename(chosen_model)}'
     return formatted_predictions
 
@@ -722,7 +704,7 @@ def browse_predictions():
         predictions_str = read_txt_file(chosen_txt_file)
         PopUpMsg(f'{predictions_str}')
     else:
-        messagebox.showinfo('No File Specified!', 'No Prediction file was specified')
+        return
 
 def verify_predictions():
     results = {}
@@ -978,7 +960,7 @@ if __name__ == '__main__':
 
     # Defining Buttons
     # When pressed, user will be prompted to specify audio samples, a template will be built and a text editor window will open with the template
-    create_labels_button = Button(frame4, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Create A Labels File', padx=10, pady=10, command = make_labels_file)
+    create_labels_button = Button(frame4, fg='#333276', background='#44DDFF', activebackground='#44DDFF', font=('Candara', 20, 'bold italic'), activeforeground='white', text='Create A Labels File', padx=10, pady=10, command = create_labels_file)
     create_labels_button.place(relx=0.5, rely=0.35, anchor=CENTER)
 
     # When pressed, user can specify a labels file to open and edit in a text editor window

@@ -42,12 +42,11 @@ def extract_features(associations_dict):
     feature_vect = np.zeros((len(associations_dict.keys()), 98))
     idx = 0
     for sample_path, label in associations_dict.items():
-        filename = 'Samples/{}'.format(os.path.basename(sample_path))
         sample_label = label
 
         # ------ Stage 1: Signal transformation ------
         # Read the input signal:
-        signal, _ = librosa.load(filename, sr=16000)
+        signal, _ = librosa.load(sample_path, sr=16000)
 
         # Compute STFT for the input signal:
         sig_stft = _stft(signal)
@@ -76,7 +75,7 @@ def extract_features(associations_dict):
         #FV_HPF = np.zeros(35)
 
         # Feature 4: FV_LPC - linear prediction cesptrum coefficients
-        FV_LPC = extract_lpcc((filename), 12)
+        FV_LPC = extract_lpcc((sample_path), 12)
         #FV_LPC = np.zeros(12)
 
         # ------ Stage 3: Attack Detection ------
@@ -125,11 +124,9 @@ def predict_pipeline(model_fpath, chosen_samples):
 
     prediction_list = []
     for sample in chosen_samples:
-        filename = 'Samples/{}'.format(os.path.basename(sample))
-
         # ------ Stage 1: Signal transformation ------
         # Read the input signal:
-        signal, _ = librosa.load(filename, sr=16000)
+        signal, _ = librosa.load(sample, sr=16000)
 
         # Compute STFT for the input signal:
         sig_stft = _stft(signal)
@@ -158,7 +155,7 @@ def predict_pipeline(model_fpath, chosen_samples):
         #FV_HPF = np.zeros(35)
 
         # Feature 4: FV_LPC - linear prediction cesptrum coefficients
-        FV_LPC = extract_lpcc((filename), 12)
+        FV_LPC = extract_lpcc((sample), 12)
         #FV_LPC = np.zeros(12)
 
         # ------ Stage 3: Attack Detection ------
