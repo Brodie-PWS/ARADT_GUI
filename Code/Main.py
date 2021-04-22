@@ -763,13 +763,12 @@ def verify_predictions():
 
         try:
             ACCURACY = (TP + TN) / (TP + TN + FP + FN)
-            FAR = FP / (FP + TN)
         except Exception as ex:
             PopUpMsg('No labels could be found for selected Sample/s. Therefore the Predictions could not be verified')
             return
 
         # Create the message to be displayed
-        message_str = f'\nOverall Accuracy: {ACCURACY}\nFAR:{FAR}\n\nTP:{TP}\nTN:{TN}\nFP:{FP}\nFN:{FN}'
+        message_str = f'\nOverall Accuracy: {ACCURACY}\n\nTP:{TP}\nTN:{TN}\nFP:{FP}\nFN:{FN}'
 
         # If there samples that labels could not be found for, amend the message to reflect this
         if len(missed_matches) > 0:
